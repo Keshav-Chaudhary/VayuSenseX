@@ -61,7 +61,7 @@ describe('Open-Meteo Integration & Normalization Service', () => {
     const data = await fetchLiveEnvironmentalData(28.65, 77.31, 'Delhi Test', 'Anand Vihar');
 
     expect(data.location.city).toBe('Delhi Test');
-    expect(data.provenance).toBe('OBSERVED');
+    expect(data.provenance).toBe('FORECAST');
     expect(data.pollutants.pm25).toBe(220.5);
     expect(data.pollutants.co).toBe(2.4); // 2400 / 1000
     expect(data.cpcbAqi.category).toBe('VERY_POOR');

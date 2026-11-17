@@ -1,10 +1,13 @@
 import React from 'react';
-import { Wind, Shield, Activity, MapPin, AlertCircle, Home, Sliders, Bike } from 'lucide-react';
+import { Wind, Shield, Activity, MapPin, AlertCircle, Home, Sliders, Bike, Users, Calendar, Bot } from 'lucide-react';
 import { AQIStandard } from '../../domain/types';
 
 export type ActiveNavView = 
   | 'landing'
   | 'dashboard'
+  | 'household'
+  | 'planner'
+  | 'assistant'
   | 'indoor'
   | 'exposure'
   | 'mobility'
@@ -51,70 +54,106 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Center Navigation Links */}
-        <nav className="hidden xl:flex items-center space-x-1" aria-label="Main Navigation">
+        <nav className="hidden 2xl:flex items-center space-x-1" aria-label="Main Navigation">
           <button
             onClick={() => onNavigate('dashboard')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'dashboard'
                 ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Activity className="w-3.5 h-3.5" />
-            <span>Atmospheric Telemetry</span>
+            <span>Atmosphere</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('household')}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+              currentView === 'household'
+                ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5 text-teal-400" />
+            <span>Household</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('planner')}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+              currentView === 'planner'
+                ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Daily Planner</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('assistant')}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+              currentView === 'assistant'
+                ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 text-teal-300" />
+            <span>AI Assistant</span>
           </button>
 
           <button
             onClick={() => onNavigate('indoor')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'indoor'
                 ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Home className="w-3.5 h-3.5" />
-            <span>Indoor Air & CADR</span>
+            <span>Indoor CADR</span>
           </button>
 
           <button
             onClick={() => onNavigate('exposure')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'exposure'
                 ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Activity className="w-3.5 h-3.5 text-teal-400" />
-            <span>Inhaled Dose Planner</span>
+            <span>Inhaled Dose</span>
           </button>
 
           <button
             onClick={() => onNavigate('mobility')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'mobility'
                 ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Bike className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Mobility & Offsets</span>
+            <span>Mobility</span>
           </button>
 
           <button
             onClick={() => onNavigate('simulator')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'simulator'
                 ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Sliders className="w-3.5 h-3.5 text-amber-400" />
-            <span>What-If Simulator</span>
+            <span>Simulator</span>
           </button>
 
           <button
             onClick={() => onNavigate('methodology')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'methodology'
                 ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -180,7 +219,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Sub-navigation bar for smaller screens */}
-      <div className="xl:hidden flex items-center space-x-1 px-4 py-2 border-t border-white/5 overflow-x-auto bg-midnight-950/95 scrollbar-none text-xs">
+      <div className="2xl:hidden flex items-center space-x-1 px-4 py-2 border-t border-white/5 overflow-x-auto bg-midnight-950/95 scrollbar-none text-xs">
         <button
           onClick={() => onNavigate('dashboard')}
           className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'dashboard' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
@@ -188,10 +227,28 @@ export const Navbar: React.FC<NavbarProps> = ({
           Atmosphere
         </button>
         <button
+          onClick={() => onNavigate('household')}
+          className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'household' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
+        >
+          Household
+        </button>
+        <button
+          onClick={() => onNavigate('planner')}
+          className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'planner' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
+        >
+          Daily Planner
+        </button>
+        <button
+          onClick={() => onNavigate('assistant')}
+          className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'assistant' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
+        >
+          AI Assistant
+        </button>
+        <button
           onClick={() => onNavigate('indoor')}
           className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'indoor' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
         >
-          Indoor Air
+          Indoor CADR
         </button>
         <button
           onClick={() => onNavigate('exposure')}
@@ -209,7 +266,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onNavigate('simulator')}
           className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'simulator' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
         >
-          What-If Simulator
+          Simulator
         </button>
         <button
           onClick={() => onNavigate('methodology')}

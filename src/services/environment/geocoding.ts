@@ -92,6 +92,7 @@ export async function searchLocations(query: string): Promise<LocationSearchResu
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'VayuSenseX-Environmental-Decision-Platform/1.0 (academic/challenge submission)',
       },
     });
     clearTimeout(timeoutId);

@@ -8,6 +8,11 @@ import { ExposureWorkbench } from '../features/exposure/ExposureWorkbench';
 import { MobilityWorkbench } from '../features/mobility/MobilityWorkbench';
 import { SimulatorWorkbench } from '../features/simulator/SimulatorWorkbench';
 import { MethodologyPage } from '../features/methodology/MethodologyPage';
+import { HouseholdWorkbench } from '../features/household/HouseholdWorkbench';
+import { PlannerWorkbench } from '../features/planner/PlannerWorkbench';
+import { AIAssistantWorkbench } from '../features/assistant/AIAssistantWorkbench';
+import { HouseholdStore } from '../domain/household/household-store';
+import { HouseholdProfile } from '../domain/household/types';
 import { SAMPLE_DELHI_SMOG, SAMPLE_BENGALURU_MODERATE } from '../domain/sample-data';
 import { AQIStandard, EnvironmentalSnapshot } from '../domain/types';
 import { fetchLiveEnvironmentalData } from '../services/environment/open-meteo';
@@ -18,6 +23,7 @@ export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ActiveNavView>('landing');
   const [standard, setStandard] = useState<AQIStandard>('CPCB');
   const [cityKey, setCityKey] = useState<'delhi' | 'bengaluru'>('delhi');
+  const [householdProfile, setHouseholdProfile] = useState<HouseholdProfile>(() => HouseholdStore.getProfile());
 
   // Telemetry state
   const [snapshot, setSnapshot] = useState<EnvironmentalSnapshot>(SAMPLE_DELHI_SMOG);
@@ -141,6 +147,26 @@ export const App: React.FC = () => {
             isStale={isStale}
             hourlyForecast={hourlyForecast}
             cleanestForecastWindow={cleanestWindow}
+          />
+        )}
+
+        {currentView === 'household' && (
+          <HouseholdWorkbench onProfileChange={setHouseholdProfile} />
+        )}
+
+        {currentView === 'planner' && (
+          <PlannerWorkbench
+            profile={householdProfile}
+            hourlyForecast={hourlyForecast}
+            currentOutdoorPm25={activeOutdoorPm25}
+          />
+        )}
+
+        {currentView === 'assistant' && (
+          <AIAssistantWorkbench
+            profile={householdProfile}
+            snapshot={snapshot}
+            hourlyForecast={hourlyForecast}
           />
         )}
 
