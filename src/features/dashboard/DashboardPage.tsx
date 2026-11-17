@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Wind, 
   Layers, 
@@ -6,12 +6,15 @@ import {
   Droplets, 
   AlertTriangle, 
   ShieldCheck, 
-  Info, 
-  Clock,
-  MapPin,
-  Cpu
+  Clock, 
+  MapPin, 
+  Search, 
+  RefreshCw, 
+  Sparkles
 } from 'lucide-react';
 import { EnvironmentalSnapshot, AQIStandard } from '../../domain/types';
+import { HourlyForecastPoint, DataProvenance } from '../../services/environment/types';
+import { HourlyForecastView } from './HourlyForecastView';
 
 interface DashboardPageProps {
   snapshot: EnvironmentalSnapshot;
@@ -19,6 +22,14 @@ interface DashboardPageProps {
   onStandardChange: (standard: AQIStandard) => void;
   onSelectCity: (cityKey: 'delhi' | 'bengaluru') => void;
   activeCityKey: 'delhi' | 'bengaluru';
+  onSearchLocation: (query: string) => void;
+  onRefresh: () => void;
+  isLoading: boolean;
+  provenance: DataProvenance;
+  isCached: boolean;
+  isStale: boolean;
+  hourlyForecast?: HourlyForecastPoint[];
+  cleanestForecastWindow?: { timestamp: string; pm25: number; hourLabel: string };
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
@@ -27,10 +38,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onStandardChange,
   onSelectCity,
   activeCityKey,
+  onSearchLocation,
+  onRefresh,
+  isLoading,
+  provenance,
+  isCached,
+  isStale,
+  hourlyForecast,
+  cleanestForecastWindow,
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const aqi = standard === 'CPCB' ? snapshot.cpcbAqi : snapshot.usEpaAqi;
 
-  // Stagnation badge colors
   const stagnationConfig = {
     LOW: { color: 'text-emerald-400', bg: 'bg-emerald-950/50', border: 'border-emerald-800/40', text: 'Low Stagnation Risk (Favorable Dispersion)' },
     MODERATE: { color: 'text-amber-400', bg: 'bg-amber-950/50', border: 'border-amber-800/40', text: 'Moderate Stagnation Risk' },
@@ -38,32 +57,67 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     CRITICAL: { color: 'text-red-400', bg: 'bg-red-950/50', border: 'border-red-800/40', text: 'Critical Thermal Inversion & Atmospheric Stagnation' },
   }[snapshot.stagnationRisk];
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      onSearchLocation(searchQuery.trim());
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
-      {/* Sample Data Disclaimer Banner */}
-      {snapshot.isSampleData && (
-        <div className="rounded-xl bg-amber-950/40 border border-amber-700/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-amber-200 space-y-2 sm:space-y-0">
-          <div className="flex items-center space-x-2">
-            <Info className="w-4 h-4 text-amber-400 shrink-0" />
+      {/* Top Telemetry & Provenance Alert Bar */}
+      <div className="rounded-xl bg-midnight-900/90 border border-white/10 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between text-xs space-y-2 sm:space-y-0">
+        <div className="flex items-center space-x-2.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-slate-300">
+            <strong>Data Provenance:</strong>{' '}
+            <span className="font-mono text-cyan-300 uppercase px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-[10px]">
+              {provenance}
+            </span>{' '}
+            via {snapshot.source}
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-3 text-slate-400 text-[11px] font-mono">
+          {isCached && <span className="text-cyan-400/80">Cached</span>}
+          {isStale && <span className="text-amber-400 font-bold">Stale Snapshot</span>}
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="flex items-center space-x-1 hover:text-white transition-colors"
+            title="Refresh Telemetry"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-cyan-400' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Cleanest Window Notification if identified */}
+      {cleanestForecastWindow && (
+        <div className="rounded-xl bg-emerald-950/50 border border-emerald-600/40 p-4 flex items-center justify-between text-xs text-emerald-200">
+          <div className="flex items-center space-x-2.5">
+            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              <strong>Sample Environmental Simulation:</strong> Running on calibrated telemetry profile (
-              {snapshot.source}). No mandatory API keys required for evaluation.
+              <strong>Cleanest Activity Window Forecast:</strong> Outdoor PM2.5 drops to approximately{' '}
+              <strong className="text-emerald-300 font-mono">{cleanestForecastWindow.pm25} µg/m³</strong> around{' '}
+              <strong className="text-white font-mono">{cleanestForecastWindow.hourLabel}</strong>. Ideal window for essential errands or room ventilation.
             </span>
           </div>
-          <span className="font-mono text-[11px] text-amber-300/80">Local-First Guest Mode Active</span>
         </div>
       )}
 
-      {/* Top Location & Scenario Switcher Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl glass-panel border border-white/10">
+      {/* Location Switcher & Search Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl glass-panel border border-white/10">
         <div>
           <div className="flex items-center space-x-2 text-xs text-slate-400 mb-1">
             <MapPin className="w-3.5 h-3.5 text-cyan-400" />
             <span>Telemetry Location</span>
             <span>•</span>
             <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span>Updated: {new Date(snapshot.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>Observed: {new Date(snapshot.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center space-x-3">
             <span>{snapshot.location.city}</span>
@@ -73,18 +127,29 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </h1>
         </div>
 
-        {/* City Toggle Buttons */}
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center bg-midnight-900 border border-white/10 rounded-xl p-1 text-xs">
+        {/* Location Search & Preset Toggles */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <input
+              type="text"
+              placeholder="Search city (e.g. Mumbai, Lahore)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full sm:w-64 pl-8 pr-3 py-1.5 bg-midnight-950 border border-white/10 rounded-xl text-white font-mono text-xs focus:border-cyan-500 focus:outline-none"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+          </form>
+
+          <div className="flex items-center bg-midnight-900 border border-white/10 rounded-xl p-1 text-xs shrink-0">
             <button
               onClick={() => onSelectCity('delhi')}
               className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 activeCityKey === 'delhi'
-                  ? 'bg-red-500/20 text-red-300 border border-red-500/30 font-bold'
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Delhi NCR (Severe Smog)
+              Delhi (Severe Smog)
             </button>
             <button
               onClick={() => onSelectCity('bengaluru')}
@@ -105,7 +170,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         
         {/* Main AQI Gauge Card (7 Cols) */}
         <div className="lg:col-span-7 glass-panel rounded-2xl p-6 border border-white/10 relative overflow-hidden flex flex-col justify-between">
-          
           <div className="flex items-center justify-between pb-4 border-b border-white/10">
             <div>
               <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Composite Air Quality Index</span>
@@ -182,12 +246,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Meteorological & Atmospheric Inversion Engine (5 Cols) */}
         <div className="lg:col-span-5 glass-panel rounded-2xl p-6 border border-white/10 flex flex-col justify-between space-y-6">
-          
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Atmospheric Dynamics</span>
@@ -206,7 +268,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
           {/* Meteorological Metrics Grid */}
           <div className="grid grid-cols-2 gap-3 text-xs">
-            
             <div className="p-3 rounded-xl bg-midnight-900/80 border border-white/5">
               <div className="flex items-center space-x-2 text-slate-400 mb-1">
                 <Layers className="w-3.5 h-3.5 text-cyan-400" />
@@ -254,21 +315,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
               <span className="text-[11px] text-slate-400">Aerosol Hygroscopic Growth</span>
             </div>
-
           </div>
 
-          {/* Scientific Annotation */}
           <p className="text-[11px] text-slate-400 leading-normal border-t border-white/5 pt-3">
             <strong>Scientific Note:</strong> When boundary-layer height drops below 300m with wind speeds under 5 km/h, vertical mixing is suppressed, trapping urban emissions near breathing zones.
           </p>
-
         </div>
 
       </div>
 
+      {/* 24-Hour Forecast Timeline */}
+      {hourlyForecast && hourlyForecast.length > 0 && (
+        <HourlyForecastView forecast={hourlyForecast} standard={standard} />
+      )}
+
       {/* Pollutant Sub-Index Breakdown Table */}
       <div className="glass-panel rounded-2xl p-6 border border-white/10">
-        
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 gap-2">
           <div>
             <h2 className="text-lg font-bold text-white">Sub-Index Breakdown by Pollutant</h2>
@@ -319,27 +381,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             );
           })}
-        </div>
-
-      </div>
-
-      {/* Deterministic Explanation / AI Grounding Preview */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/10 bg-midnight-900/40">
-        <div className="flex items-center space-x-2 text-cyan-400 text-xs font-mono mb-2">
-          <Cpu className="w-4 h-4" />
-          <span>Deterministic Environmental Reasoning (Fact-ID Grounded)</span>
-        </div>
-        <p className="text-sm text-slate-200 leading-relaxed">
-          Pollution in <strong className="text-white">{snapshot.location.city}</strong> is currently categorized as{' '}
-          <strong style={{ color: aqi.categoryColor }}>{aqi.categoryLabel}</strong> driven primarily by elevated{' '}
-          <strong className="text-cyan-300 uppercase">{aqi.dominantPollutant}</strong> concentrations of{' '}
-          <span className="font-mono text-white">{snapshot.pollutants.pm25} µg/m³</span>. Due to a shallow mixing layer of{' '}
-          <span className="font-mono text-white">{snapshot.weather.boundaryLayerHeight}m</span> and calm wind velocity of{' '}
-          <span className="font-mono text-white">{snapshot.weather.windSpeed} km/h</span>, thermal inversion prevents pollutant dispersion.
-        </p>
-        <div className="mt-3 text-xs text-slate-400 flex items-center space-x-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>Grounding verified: 0 hallucinated measurements. All numerical values reference validated engine telemetry.</span>
         </div>
       </div>
 
