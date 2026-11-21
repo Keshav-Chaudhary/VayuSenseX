@@ -1,180 +1,383 @@
 import React, { useState, useMemo } from 'react';
-import { TreePine, Leaf, ArrowRight } from 'lucide-react';
-import { compareTransportEmissions, TRANSPORT_EMISSION_FACTORS, TransportMode } from '../../domain/sustainability';
+import { 
+  Bike, Compass, ShieldCheck, ArrowRight, Clock, 
+  TrendingDown, CheckCircle2, Layers 
+} from 'lucide-react';
+import { evaluateCleanCorridorRoutes, URBAN_NODES } from '../../domain/mobility';
+import { compareTransportEmissions, TransportMode } from '../../domain/sustainability';
 
 export const MobilityWorkbench: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'routing' | 'lifecycle'>('routing');
+
+  // Dijkstra clean routing state
+  const [originId, setOriginId] = useState<string>('NODE_CBD');
+  const [destinationId, setDestinationId] = useState<string>('NODE_RESIDENTIAL');
+  const [preferredMode, setPreferredMode] = useState<TransportMode>('PETROL_CAR');
+  const [optimizationGoal, setOptimizationGoal] = useState<'LOWEST_EXPOSURE' | 'SHORTEST_TIME' | 'BALANCED'>('LOWEST_EXPOSURE');
+  const [ambientPm25, setAmbientPm25] = useState<number>(180);
+
+  // Lifecycle emissions state
   const [distanceKm, setDistanceKm] = useState<number>(16);
   const [currentMode, setCurrentMode] = useState<TransportMode>('PETROL_CAR');
   const [alternativeMode, setAlternativeMode] = useState<TransportMode>('METRO_RAIL');
   const [daysPerWeek, setDaysPerWeek] = useState<number>(5);
 
-  const comparison = useMemo(() => {
+  const routeEvaluations = useMemo(() => {
+    return evaluateCleanCorridorRoutes({
+      originNodeId: originId,
+      destinationNodeId: destinationId,
+      mode: preferredMode,
+      optimizationGoal,
+      ambientRegionalPm25: ambientPm25,
+    });
+  }, [originId, destinationId, preferredMode, optimizationGoal, ambientPm25]);
+
+  const emissionsComparison = useMemo(() => {
     return compareTransportEmissions(distanceKm, currentMode, alternativeMode, daysPerWeek);
   }, [distanceKm, currentMode, alternativeMode, daysPerWeek]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Header */}
-      <div>
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-xs font-mono mb-2">
-          <Leaf className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Module H Deterministic Engine</span>
-        </div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          Sustainable Mobility & Carbon Offset Calculator
-        </h1>
-        <p className="text-slate-300 text-sm mt-1 max-w-3xl leading-relaxed">
-          Quantify direct tailpipe and lifecycle greenhouse gas offsets ($CO_2e$) when switching urban commuting modes based on India GHG Protocol and CEA grid intensity benchmarks.
-        </p>
-      </div>
-
-      {/* Main Interactive Controls & Comparison */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Controls Card (5 Cols) */}
-        <div className="lg:col-span-5 glass-panel rounded-2xl p-6 border border-white/10 space-y-5">
-          <h2 className="text-base font-bold text-white pb-3 border-b border-white/10">
-            Commute Parameters
-          </h2>
-
-          {/* Distance Slider */}
-          <div>
-            <div className="flex justify-between items-center text-xs mb-1">
-              <span className="font-semibold text-slate-300">One-Way Commute Distance:</span>
-              <span className="font-mono text-cyan-400 font-bold">{distanceKm} km</span>
-            </div>
-            <input
-              type="range"
-              min="2"
-              max="60"
-              value={distanceKm}
-              onChange={(e) => setDistanceKm(parseInt(e.target.value))}
-              className="w-full accent-cyan-500 cursor-pointer"
-            />
-            <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-0.5">
-              <span>2 km (Local)</span>
-              <span>25 km (Suburban)</span>
-              <span>60 km (Regional)</span>
-            </div>
+      {/* Header Banner */}
+      <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10 relative overflow-hidden bg-gradient-to-r from-midnight-900 via-midnight-950 to-midnight-900">
+        <div>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-3">
+            <Compass className="w-3.5 h-3.5" />
+            <span>Exposure-Aware Urban Mobility Engine</span>
           </div>
-
-          {/* Frequency */}
-          <div>
-            <div className="flex justify-between items-center text-xs mb-1">
-              <span className="font-semibold text-slate-300">Frequency (Days / Week):</span>
-              <span className="font-mono text-cyan-400 font-bold">{daysPerWeek} days</span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="7"
-              value={daysPerWeek}
-              onChange={(e) => setDaysPerWeek(parseInt(e.target.value))}
-              className="w-full accent-cyan-500 cursor-pointer"
-            />
-          </div>
-
-          {/* Current Mode Selection */}
-          <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-              Current Commute Mode:
-            </label>
-            <select
-              value={currentMode}
-              onChange={(e) => setCurrentMode(e.target.value as TransportMode)}
-              className="w-full px-3 py-2 bg-midnight-900 border border-white/10 rounded-xl text-white font-mono text-xs focus:outline-none"
-            >
-              {Object.entries(TRANSPORT_EMISSION_FACTORS).map(([key, f]) => (
-                <option key={key} value={key}>
-                  {f.label} ({f.lifecycleGramsCO2ePerKm} g CO₂e/km)
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Alternative Mode Selection */}
-          <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-              Alternative Sustainable Mode:
-            </label>
-            <select
-              value={alternativeMode}
-              onChange={(e) => setAlternativeMode(e.target.value as TransportMode)}
-              className="w-full px-3 py-2 bg-midnight-900 border border-white/10 rounded-xl text-white font-mono text-xs focus:outline-none"
-            >
-              {Object.entries(TRANSPORT_EMISSION_FACTORS).map(([key, f]) => (
-                <option key={key} value={key}>
-                  {f.label} ({f.lifecycleGramsCO2ePerKm} g CO₂e/km)
-                </option>
-              ))}
-            </select>
-          </div>
-
-        </div>
-
-        {/* Quantified Impact Cards (7 Cols) */}
-        <div className="lg:col-span-7 glass-panel rounded-2xl p-6 border border-white/10 flex flex-col justify-between space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-white flex items-center justify-between pb-3 border-b border-white/10">
-              <span>Modelled Carbon Offsets & Equivalents</span>
-              <span className="text-xs font-mono text-emerald-400 font-bold">
-                {comparison.percentReduction}% Emission Reduction
-              </span>
-            </h2>
-
-            {/* Visual Mode Comparison Card */}
-            <div className="mt-4 p-4 rounded-xl bg-midnight-900/80 border border-white/5 flex items-center justify-between text-xs font-mono">
-              <div>
-                <span className="text-slate-500 block text-[10px]">CURRENT EMISSION / TRIP</span>
-                <span className="text-rose-300 font-bold text-lg">{comparison.currentTripCO2eGrams} g CO₂e</span>
-              </div>
-              <ArrowRight className="w-5 h-5 text-slate-500" />
-              <div className="text-right">
-                <span className="text-slate-500 block text-[10px]">ALTERNATIVE / TRIP</span>
-                <span className="text-emerald-300 font-bold text-lg">{comparison.alternativeTripCO2eGrams} g CO₂e</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Annual & Monthly Impact Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 rounded-2xl bg-midnight-900/90 border border-white/10">
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Per Trip Savings</span>
-              <div className="text-3xl font-black font-mono text-cyan-300 mt-1">
-                {comparison.savingsGramsCO2ePerTrip}{' '}
-                <span className="text-xs font-normal text-slate-400">g CO₂e</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">per one-way journey</p>
-            </div>
-
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Annual Carbon Avoided</span>
-              <div className="text-3xl font-black font-mono text-emerald-400 mt-1">
-                {comparison.savingsKgCO2ePerYear}{' '}
-                <span className="text-xs font-normal text-slate-400">kg CO₂e</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">cumulative offset</p>
-            </div>
-
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Urban Tree Equivalent</span>
-              <div className="text-3xl font-black font-mono text-teal-300 mt-1 flex items-baseline space-x-1">
-                <span>{comparison.equivalentTreesPlanted}</span>
-                <TreePine className="w-5 h-5 text-emerald-400 inline ml-1" />
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">trees sequestering CO₂/yr</p>
-            </div>
-          </div>
-
-          {/* Factor Attribution Note */}
-          <p className="text-[11px] text-slate-400 leading-normal border-t border-white/5 pt-3">
-            <strong>System Boundary:</strong> {comparison.boundaryNote}
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Clean Corridor Navigation & Transit Offsets
+          </h1>
+          <p className="text-slate-400 text-sm mt-1 max-w-3xl">
+            Optimizes urban journeys by evaluating trade-offs between travel duration and inhaled particulate dose ($D$). Steers pedestrians and commuters through vegetative canopy greenways and underground metro links away from diesel highway canyons.
           </p>
         </div>
 
+        {/* Navigation Tabs */}
+        <div className="flex items-center space-x-2 border-t border-white/10 pt-4 mt-6">
+          <button
+            onClick={() => setActiveTab('routing')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'routing'
+                ? 'bg-cyan-500 text-midnight-950 font-bold shadow-glow-cyan'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            <span>Clean Corridor Route Planner (Dijkstra)</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('lifecycle')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'lifecycle'
+                ? 'bg-cyan-500 text-midnight-950 font-bold shadow-glow-cyan'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Bike className="w-4 h-4" />
+            <span>Well-to-Wheel Lifecycle Offsets</span>
+          </button>
+        </div>
       </div>
 
+      {/* Tab 1: Clean Corridor Dijkstra Router */}
+      {activeTab === 'routing' && (
+        <div className="space-y-6">
+          {/* Scientific Separation Alert */}
+          <div className="p-4 rounded-xl bg-midnight-900/60 border border-white/10 text-xs flex items-start space-x-3 text-slate-300">
+            <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-bold text-white block">Physical Distinction: Emissions vs. Ambient vs. Inhaled Dose</span>
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                1) <strong className="text-emerald-400">Tailpipe Emissions</strong> (g CO₂e/km): Environmental burden generated by vehicle.  
+                2) <strong className="text-amber-400">Corridor Ambient PM2.5</strong> (µg/m³): Trapped roadside concentration (e.g., highway canyons are 1.45x ambient, canopy greenways are 0.65x ambient).  
+                3) <strong className="text-teal-400">Inhaled Dose</strong> (µg): Actual toxic mass entering lungs based on respiration rate and cabin filtration (Metro: 85% filtration, Walking: 0% filtration).
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Col: Router Parameters */}
+            <div className="glass-panel p-6 rounded-2xl border border-white/10 bg-midnight-900/40 space-y-5 h-fit text-xs">
+              <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                <Compass className="w-4 h-4 text-cyan-400" />
+                <span>Commute Settings</span>
+              </h3>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">Origin Node</label>
+                <select
+                  value={originId}
+                  onChange={(e) => setOriginId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
+                >
+                  {Object.values(URBAN_NODES).map(n => (
+                    <option key={n.id} value={n.id}>{n.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">Destination Node</label>
+                <select
+                  value={destinationId}
+                  onChange={(e) => setDestinationId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
+                >
+                  {Object.values(URBAN_NODES).map(n => (
+                    <option key={n.id} value={n.id}>{n.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">Baseline Travel Mode</label>
+                <select
+                  value={preferredMode}
+                  onChange={(e) => setPreferredMode(e.target.value as TransportMode)}
+                  className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
+                >
+                  <option value="PETROL_CAR">Petrol Car (Solo Commute)</option>
+                  <option value="DIESEL_CAR">Diesel Car</option>
+                  <option value="EV_CAR">Electric Vehicle (EV)</option>
+                  <option value="MOTORCYCLE">Two-Wheeler Motorcycle</option>
+                  <option value="BUS">Public Transit Bus</option>
+                  <option value="METRO_RAIL">Metro Rail</option>
+                  <option value="CYCLING">Bicycle</option>
+                  <option value="WALKING">Walking</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-medium mb-1">Optimization Strategy</label>
+                <select
+                  value={optimizationGoal}
+                  onChange={(e) => setOptimizationGoal(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
+                >
+                  <option value="LOWEST_EXPOSURE">Lowest Inhaled Particulate Dose</option>
+                  <option value="SHORTEST_TIME">Fastest Travel Time</option>
+                  <option value="BALANCED">Balanced Time & Exposure</option>
+                </select>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-slate-300 font-medium">Ambient Regional PM2.5:</span>
+                  <span className="font-mono text-cyan-400 font-bold">{ambientPm25} µg/m³</span>
+                </div>
+                <input
+                  type="range"
+                  min="40"
+                  max="450"
+                  step="10"
+                  value={ambientPm25}
+                  onChange={(e) => setAmbientPm25(Number(e.target.value))}
+                  className="w-full accent-cyan-400"
+                />
+              </div>
+            </div>
+
+            {/* Right 2 Cols: Evaluated Route Options */}
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                <Layers className="w-4 h-4 text-teal-400" />
+                <span>Evaluated Multi-Modal Corridor Paths</span>
+              </h3>
+
+              <div className="space-y-4">
+                {routeEvaluations.map(route => (
+                  <div
+                    key={route.id}
+                    className={`glass-card p-5 rounded-2xl border transition-all ${
+                      route.isLowestExposure
+                        ? 'border-teal-500/40 bg-teal-950/20 shadow-glow-cyan/5'
+                        : 'border-white/10 bg-midnight-900/60'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-base font-bold text-white">{route.title}</span>
+                          {route.isLowestExposure && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                              ★ Cleanest Route
+                            </span>
+                          )}
+                          {route.isFastest && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                              Fastest
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-snug">{route.scientificNotes}</p>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <span className="text-xl font-bold font-mono text-teal-300 block">
+                          {route.totalInhaledDoseUg} µg
+                        </span>
+                        <span className="text-[10px] text-slate-400">Total Inhaled Dose</span>
+                      </div>
+                    </div>
+
+                    {/* Metric Badges */}
+                    <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/5 text-xs">
+                      <div className="p-2.5 rounded-lg bg-midnight-950/60 border border-white/5">
+                        <span className="text-[10px] text-slate-500 block">Travel Duration</span>
+                        <div className="flex items-center space-x-1.5 mt-0.5">
+                          <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                          <span className="font-mono font-bold text-white">{route.totalDurationMinutes} min</span>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-midnight-950/60 border border-white/5">
+                        <span className="text-[10px] text-slate-500 block">Corridor Distance</span>
+                        <span className="font-mono font-bold text-white block mt-0.5">{route.totalDistanceKm} km</span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-midnight-950/60 border border-white/5">
+                        <span className="text-[10px] text-slate-500 block">Lifecycle CO2e</span>
+                        <span className="font-mono font-bold text-emerald-300 block mt-0.5">
+                          {route.totalLifecycleCO2eGrams > 1000 
+                            ? `${(route.totalLifecycleCO2eGrams / 1000).toFixed(2)} kg` 
+                            : `${route.totalLifecycleCO2eGrams} g`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Segments Breakdown */}
+                    <div className="mt-3 space-y-1.5 text-[11px]">
+                      <span className="text-slate-500 font-semibold block text-[10px]">Segment Corridor Steps:</span>
+                      {route.segments.map((seg, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 rounded bg-midnight-950/40 text-slate-300">
+                          <div className="flex items-center space-x-2 truncate">
+                            <span className="font-mono text-slate-500">{i + 1}.</span>
+                            <span>{seg.fromNodeName}</span>
+                            <ArrowRight className="w-3 h-3 text-slate-500 shrink-0" />
+                            <span>{seg.toNodeName}</span>
+                            <span className="text-[10px] text-cyan-400 font-mono">({seg.corridorType.replace(/_/g, ' ')})</span>
+                          </div>
+                          <span className="font-mono text-slate-400 shrink-0 ml-2">{seg.durationMinutes}m • {seg.inhaledDoseUg}µg</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Well-to-Wheel Lifecycle Emissions */}
+      {activeTab === 'lifecycle' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-5 glass-panel rounded-2xl p-6 border border-white/10 space-y-5 text-xs">
+            <h3 className="text-base font-bold text-white pb-3 border-b border-white/10">
+              Commute Parameters
+            </h3>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-slate-300 font-medium">One-Way Commute Distance:</span>
+                <span className="font-mono text-cyan-400 font-bold">{distanceKm} km</span>
+              </div>
+              <input
+                type="range"
+                min="2"
+                max="60"
+                value={distanceKm}
+                onChange={(e) => setDistanceKm(Number(e.target.value))}
+                className="w-full accent-cyan-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">Current Baseline Mode</label>
+              <select
+                value={currentMode}
+                onChange={(e) => setCurrentMode(e.target.value as TransportMode)}
+                className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
+              >
+                <option value="PETROL_CAR">Petrol Car (Solo)</option>
+                <option value="DIESEL_CAR">Diesel Car (Solo)</option>
+                <option value="MOTORCYCLE">Motorcycle / Scooter</option>
+                <option value="BUS">City Diesel Bus</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-medium mb-1">Alternative Sustainable Mode</label>
+              <select
+                value={alternativeMode}
+                onChange={(e) => setAlternativeMode(e.target.value as TransportMode)}
+                className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
+              >
+                <option value="METRO_RAIL">Rapid Metro Rail</option>
+                <option value="EV_CAR">Electric Vehicle (Grid Charged)</option>
+                <option value="CARPOOL">Carpool (Shared)</option>
+                <option value="CYCLING">Bicycle</option>
+                <option value="WALKING">Walking</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-slate-300 font-medium">Weekly Travel Days:</span>
+                <span className="font-mono text-cyan-400 font-bold">{daysPerWeek} days/week</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="7"
+                value={daysPerWeek}
+                onChange={(e) => setDaysPerWeek(Number(e.target.value))}
+                className="w-full accent-cyan-400"
+              />
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
+            <h3 className="text-base font-bold text-white flex items-center space-x-2">
+              <TrendingDown className="w-4 h-4 text-teal-400" />
+              <span>Calculated Emission Savings</span>
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-midnight-900/60 border border-white/5">
+                <span className="text-xs text-slate-400 block">Daily CO2e Avoided</span>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-2xl font-bold font-mono text-teal-300">
+                    {(emissionsComparison.savingsGramsCO2ePerTrip * 2 / 1000).toFixed(2)}
+                  </span>
+                  <span className="text-xs text-slate-400">kg CO2e</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-midnight-900/60 border border-white/5">
+                <span className="text-xs text-slate-400 block">Annual Cumulative Offset</span>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-2xl font-bold font-mono text-emerald-300">
+                    {emissionsComparison.savingsKgCO2ePerYear}
+                  </span>
+                  <span className="text-xs text-slate-400">kg CO2e/year</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-teal-950/20 border border-teal-500/20 text-xs text-slate-300 space-y-2">
+              <div className="flex items-center space-x-1.5 text-teal-300 font-bold">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Equivalent Real-World Environmental Impact:</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                Switching {distanceKm} km daily from {currentMode.replace(/_/g, ' ')} to {alternativeMode.replace(/_/g, ' ')} avoids approximately <strong className="text-white">{emissionsComparison.savingsKgCO2ePerYear} kg of greenhouse gases</strong> annually — equivalent to sequestering the carbon of <strong className="text-teal-300">{emissionsComparison.equivalentTreesPlanted} urban trees</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

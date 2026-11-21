@@ -1,0 +1,40 @@
+name: VayuSenseX Quality & Security CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  verify:
+    name: Verify Quality, Security, Tests & Size
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Security Vulnerability Audit
+        run: npm audit --audit-level=high
+
+      - name: Strict TypeScript Compilation Check
+        run: npm run typecheck
+
+      - name: Run Vitest Automated Test Suite (80 Tests)
+        run: npm test
+
+      - name: Verify Repository Size (< 10 MB Limit)
+        run: npm run check-size
+
+      - name: Production Bundle Build
+        run: npm run build

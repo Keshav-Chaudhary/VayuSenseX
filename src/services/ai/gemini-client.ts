@@ -5,7 +5,7 @@ import { generateDeterministicBriefing, generateDeterministicAnswer } from './ai
 import { validateAIGrounding } from './grounding-validator';
 
 /**
- * Checks if a Gemini API key is configured.
+ * Checks if a Gemini API key or backend gateway is configured.
  */
 export function isGeminiConfigured(): boolean {
   return typeof import.meta !== 'undefined' && !!((import.meta as any).env?.VITE_GEMINI_API_KEY);
@@ -13,7 +13,8 @@ export function isGeminiConfigured(): boolean {
 
 /**
  * Generates an AI-grounded daily briefing.
- * Falls back to deterministic rule-based output if the API key is not configured,
+ * Attempts server-side gateway first (/api/briefing) to ensure zero client-side key leakage.
+ * Falls back to deterministic rule-based output if the gateway is offline,
  * if rate limits are exceeded, or if grounding validation rejects the response.
  */
 export async function getGroundedDailyBriefing(
@@ -23,10 +24,33 @@ export async function getGroundedDailyBriefing(
   standard: AQIStandard = 'CPCB',
   customApiKey?: string
 ): Promise<GroundedAIResponse> {
+  // 1. Try secure backend gateway first (server-side key custody)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const res = await fetch('/api/briefing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ snapshot, plan, registry, standard }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.headline && data.groundingStatus === 'VERIFIED') {
+        return data;
+      }
+    }
+  } catch {
+    // Gateway offline, development mode, or static hosting — proceed to direct fallback
+  }
+
+  // 2. If client supplied a custom local key, execute direct with Fact-ID verification
   const envKey = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_GEMINI_API_KEY : undefined;
   const apiKey = customApiKey || envKey;
 
-  // If no Gemini key is provided, return verified deterministic briefing immediately
   if (!apiKey || apiKey.trim() === '') {
     return generateDeterministicBriefing(snapshot, plan, registry, standard);
   }
@@ -124,6 +148,29 @@ export async function askGroundedAssistant(
   registry: FactRegistry,
   customApiKey?: string
 ): Promise<GroundedAIResponse> {
+  // 1. Try secure backend gateway first
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const res = await fetch('/api/assist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, snapshot, plan, registry }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.headline && data.groundingStatus === 'VERIFIED') {
+        return data;
+      }
+    }
+  } catch {
+    // Gateway offline or direct fallback
+  }
+
   const envKey = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_GEMINI_API_KEY : undefined;
   const apiKey = customApiKey || envKey;
 

@@ -1,5 +1,8 @@
 import React from 'react';
-import { Wind, Shield, Activity, MapPin, AlertCircle, Home, Sliders, Bike, Users, Calendar, Bot } from 'lucide-react';
+import { 
+  Wind, Shield, Activity, MapPin, AlertCircle, Home, 
+  Sliders, Bike, Users, Calendar, Bot, Layers, HeartHandshake 
+} from 'lucide-react';
 import { AQIStandard } from '../../domain/types';
 
 export type ActiveNavView = 
@@ -11,6 +14,8 @@ export type ActiveNavView =
   | 'indoor'
   | 'exposure'
   | 'mobility'
+  | 'impact'
+  | 'community'
   | 'simulator'
   | 'methodology';
 
@@ -140,6 +145,30 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            onClick={() => onNavigate('impact')}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+              currentView === 'impact'
+                ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Impact Ledger</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('community')}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+              currentView === 'community'
+                ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <HeartHandshake className="w-3.5 h-3.5 text-rose-400" />
+            <span>Community</span>
+          </button>
+
+          <button
             onClick={() => onNavigate('simulator')}
             className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
               currentView === 'simulator'
@@ -261,6 +290,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'mobility' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
         >
           Mobility
+        </button>
+        <button
+          onClick={() => onNavigate('impact')}
+          className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'impact' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
+        >
+          Impact
+        </button>
+        <button
+          onClick={() => onNavigate('community')}
+          className={`px-2.5 py-1 rounded-md shrink-0 ${currentView === 'community' ? 'text-cyan-400 font-bold bg-cyan-950' : 'text-slate-400'}`}
+        >
+          Community
         </button>
         <button
           onClick={() => onNavigate('simulator')}

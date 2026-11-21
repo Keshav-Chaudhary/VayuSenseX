@@ -7,36 +7,51 @@ VayuSenseX is architected around a strict separation of concerns:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                 Client Layer (React 19 + Vite)              │
-│  - Landing View · Atmospheric Dashboard · Methodology Docs │
+│  - 10 Environmental Intelligence Workbenches                │
 │  - Local-First Guest State (localStorage)                   │
-│  - Accessible Responsive UI (WCAG 2.2 AA)                   │
+│  - Accessible Responsive UI (WCAG 2.2 Level AA)             │
 └──────────────────────────────┬──────────────────────────────┘
                                │
             ┌──────────────────┴──────────────────┐
             ▼                                     ▼
 ┌───────────────────────────────┐ ┌───────────────────────────────┐
-│     Deterministic Engine      │ │      GenAI Explanation        │
-│        (src/domain/)          │ │        (Server/API)           │
-│ - CPCB & US EPA Dual AQI      │ │ - Structured JSON             │
-│ - PBLH Inversion Heuristics   │ │ - Fact-ID Grounding Validator │
-│ - Indoor Mass-Balance ODE     │ │ - Zero Hallucinated Numbers   │
-│ - Inhaled Particulate Dose    │ │ - Deterministic Fallback      │
+│     Deterministic Engine      │ │    Server Security Gateway    │
+│        (src/domain/)          │ │           (server/)           │
+│ - CPCB & US EPA Dual AQI      │ │ - Express Security Gateway    │
+│ - PBLH Inversion Heuristics   │ │ - Helmet-Grade CSP + Nosniff  │
+│ - Indoor Mass-Balance ODE     │ │ - 15 KB Payload Cap           │
+│ - Inhaled Particulate Dose    │ │ - 30 req/min IP Rate Limiter  │
+│ - Dijkstra Clean Router       │ │ - In-Memory SHA-256 LRU Cache │
+│ - Impact Ledger & Dedup Hash  │ │ - Fact-ID Grounding Validator │
+│ - Community Resilience Hub    │ │ - Deterministic AI Fallback   │
 └───────────────────────────────┘ └───────────────────────────────┘
 ```
 
 ## Directory Structure
 ```
 PromptWars_Challenge6/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── docs/
+│   ├── ACCESSIBILITY.md
 │   ├── AI_GROUNDING.md
 │   ├── ARCHITECTURE.md
 │   ├── CALCULATIONS.md
+│   ├── CODE_QUALITY.md
+│   ├── DATA_INTEGRITY_AUDIT.md
 │   ├── DATA_SOURCES.md
-│   ├── PHASE_1_2_IMPLEMENTATION_PLAN.md
-│   ├── PHASE_3_IMPLEMENTATION_PLAN.md
-│   ├── PHASE_3_IMPLEMENTATION_REPORT.md
-│   ├── PLANNER_DESIGN.md
-│   └── PRIVACY.md
+│   ├── EFFICIENCY.md
+│   ├── PHASE_4_IMPLEMENTATION_REPORT.md
+│   ├── PROBLEM_ALIGNMENT.md
+│   ├── SECURITY.md
+│   └── TESTING.md
+├── server/
+│   ├── aiService.ts
+│   ├── cache.ts
+│   └── middleware.ts
+├── server.ts
+├── metadata.json
 ├── scripts/
 │   └── check-repo-size.mjs
 ├── src/
@@ -48,9 +63,12 @@ PromptWars_Challenge6/
 │   │       └── Footer.tsx
 │   ├── domain/
 │   │   ├── aqi/
+│   │   ├── community/
 │   │   ├── exposure/
 │   │   ├── household/
+│   │   ├── impact/
 │   │   ├── indoor/
+│   │   ├── mobility/
 │   │   ├── planner/
 │   │   ├── scenarios/
 │   │   ├── smog/
@@ -59,58 +77,29 @@ PromptWars_Challenge6/
 │   │   └── types.ts
 │   ├── features/
 │   │   ├── assistant/
-│   │   │   └── AIAssistantWorkbench.tsx
+│   │   ├── community/
 │   │   ├── dashboard/
-│   │   │   └── DashboardPage.tsx
 │   │   ├── exposure/
-│   │   │   └── ExposureWorkbench.tsx
 │   │   ├── household/
-│   │   │   └── HouseholdWorkbench.tsx
+│   │   ├── impact/
 │   │   ├── indoor/
-│   │   │   └── IndoorWorkbench.tsx
 │   │   ├── landing/
-│   │   │   └── LandingPage.tsx
 │   │   ├── methodology/
-│   │   │   └── MethodologyPage.tsx
 │   │   ├── mobility/
-│   │   │   └── MobilityWorkbench.tsx
 │   │   ├── planner/
-│   │   │   └── PlannerWorkbench.tsx
 │   │   └── simulator/
-│   │       └── SimulatorWorkbench.tsx
-│   ├── services/
-│   │   ├── ai/
-│   │   │   ├── ai-fallback.ts
-│   │   │   ├── fact-registry.ts
-│   │   │   ├── gemini-client.ts
-│   │   │   ├── grounding-validator.ts
-│   │   │   └── types.ts
-│   │   └── environment/
-│   │       ├── geocoding.ts
-│   │       ├── open-meteo.ts
-│   │       └── types.ts
-│   ├── styles/
-│   │   └── index.css
-│   └── main.tsx
-├── tests/
-│   ├── api/
-│   │   ├── ai-grounding.test.ts
-│   │   └── open-meteo.test.ts
-│   └── domain/
-│       ├── aqi.test.ts
-│       ├── exposure.test.ts
-│       ├── household.test.ts
-│       ├── indoor.test.ts
-│       ├── planner.test.ts
-│       ├── scenarios.test.ts
-│       ├── smog.test.ts
-│       └── sustainability.test.ts
-├── .env.example
-├── .gitignore
-├── index.html
-├── package.json
-├── README.md
-├── SECURITY.md
-├── tsconfig.json
-└── vite.config.ts
+│   └── services/
+│       ├── ai/
+│       └── environment/
+└── tests/
+    ├── api/
+    ├── domain/
+    └── server/
 ```
+
+## Verification & Key Architectural Guarantees
+1. **Zero Hallucinated Numbers**: Grounding validator verifies generated numbers match the Fact Registry within $\pm 5\%$.
+2. **Offline Resilience**: Full deterministic fallbacks operate if external AI or networks are offline.
+3. **Local-First Privacy**: Household profiles and community pledges are stored client-side; zero PII sent to cloud.
+4. **Anti-Double-Counting Guard**: Suggested and planned actions yield $0.0\,\mu\text{g}$ realized savings until marked completed.
+5. **Physical Separation in Mobility**: Distinguishes tailpipe emissions ($g\ CO_2e/\text{km}$), corridor ambient PM2.5 ($\mu\text{g/m}^3$), and commuter inhaled dose ($\mu\text{g}$).

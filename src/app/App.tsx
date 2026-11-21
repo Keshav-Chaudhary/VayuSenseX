@@ -11,6 +11,8 @@ import { MethodologyPage } from '../features/methodology/MethodologyPage';
 import { HouseholdWorkbench } from '../features/household/HouseholdWorkbench';
 import { PlannerWorkbench } from '../features/planner/PlannerWorkbench';
 import { AIAssistantWorkbench } from '../features/assistant/AIAssistantWorkbench';
+import { ImpactWorkbench } from '../features/impact/ImpactWorkbench';
+import { CommunityHub } from '../features/community/CommunityHub';
 import { HouseholdStore } from '../domain/household/household-store';
 import { HouseholdProfile } from '../domain/household/types';
 import { SAMPLE_DELHI_SMOG, SAMPLE_BENGALURU_MODERATE } from '../domain/sample-data';
@@ -180,6 +182,14 @@ export const App: React.FC = () => {
 
         {currentView === 'mobility' && (
           <MobilityWorkbench />
+        )}
+
+        {currentView === 'impact' && (
+          <ImpactWorkbench />
+        )}
+
+        {currentView === 'community' && (
+          <CommunityHub />
         )}
 
         {currentView === 'simulator' && (
