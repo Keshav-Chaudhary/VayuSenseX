@@ -13,5 +13,21 @@ export default defineConfig({
   server: {
     port: 3000,
     open: false,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'icons-vendor': ['lucide-react'],
+        },
+      },
+    },
   },
 });

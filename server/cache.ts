@@ -28,11 +28,12 @@ export class Sha256LruCache<T> {
   }
 
   /**
-   * Generates a 16-character SHA-256 hash key from structured input.
+   * Generates a 64-character SHA-256 hash key from structured input.
+   * Full 256-bit entropy eliminates birthday-paradox hash collision risks.
    */
   hashKey(input: unknown): string {
     const serialized = typeof input === 'string' ? input : JSON.stringify(input);
-    return crypto.createHash('sha256').update(serialized).digest('hex').slice(0, 16);
+    return crypto.createHash('sha256').update(serialized).digest('hex');
   }
 
   get(key: string): T | null {
@@ -51,6 +52,10 @@ export class Sha256LruCache<T> {
   }
 
   set(key: string, value: T, ttlMs?: number): void {
+    if (value === undefined || value === null) {
+      return; // Never cache invalid or failed responses
+    }
+
     if (this.cache.has(key)) {
       this.cache.delete(key);
     } else if (this.cache.size >= this.maxEntries) {

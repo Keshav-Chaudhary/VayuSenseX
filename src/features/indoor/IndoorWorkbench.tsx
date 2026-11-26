@@ -21,6 +21,10 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
   const [airExchangeACH, setAirExchangeACH] = useState<number>(0.3); // sealed room baseline
   const [outdoorConcentration, setOutdoorConcentration] = useState<number>(currentOutdoorPm25);
 
+  React.useEffect(() => {
+    setOutdoorConcentration(currentOutdoorPm25);
+  }, [currentOutdoorPm25]);
+
   // Compute room volume
   const volumeM3 = useMemo(() => {
     return calculateRoomVolume({ lengthM, widthM, heightM });
@@ -70,13 +74,13 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
       <div>
         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-xs font-mono mb-2">
           <Home className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Module E Deterministic Engine</span>
+          <span>Home Air Quality Calculator</span>
         </div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          Indoor Air Quality & Mechanical Filtration Workbench
+          Cleaner Indoor Air &amp; Purifier Guide
         </h1>
         <p className="text-slate-300 text-sm mt-1 max-w-3xl leading-relaxed">
-          Simulate particle penetration, calculate room-specific CADR air changes, evaluate DIY box-fan filtration, and solve single-zone indoor mass-balance differential equations.
+          Enter your room size and purifier power to see how fast you can clean smoky indoor air, or check an affordable DIY box-fan filter setup.
         </p>
       </div>
 

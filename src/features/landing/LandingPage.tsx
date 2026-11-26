@@ -1,16 +1,17 @@
 import React from 'react';
-import { 
-  Wind, 
-  Home, 
-  Activity, 
-  ArrowRight, 
-  Sliders, 
-  CheckCircle2, 
-  Sparkles, 
+import {
+  Wind,
+  Home,
+  Activity,
+  ArrowRight,
+  Sliders,
+  CheckCircle2,
+  Sparkles,
   Layers,
-  Gauge
+  Gauge,
 } from 'lucide-react';
 import { EnvironmentalSnapshot, AQIStandard } from '../../domain/types';
+import { Badge } from '../../components/ui/Badge';
 
 interface LandingPageProps {
   onEnterDashboard: () => void;
@@ -28,111 +29,127 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const aqiResult = standard === 'CPCB' ? snapshot.cpcbAqi : snapshot.usEpaAqi;
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Background atmospheric gradient & subtle grid */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative overflow-hidden bg-[var(--bg)] text-[var(--fg)] transition-colors duration-300">
+      {/* Ambient background glow lighting */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-12 right-1/4 -z-10 h-[520px] w-[620px] rounded-full bg-[var(--accent)] opacity-10 blur-[140px]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-10 left-4 -z-10 h-[400px] w-[500px] rounded-full bg-teal-500/10 blur-[130px]"
+      />
+      <div className="absolute inset-0 bg-grid-pattern opacity-30 pointer-events-none" />
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
+      <section className="relative pt-24 pb-16 sm:pt-28 lg:pt-32 lg:pb-24">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
             {/* Left Hero Content */}
-            <div className="lg:col-span-7 space-y-6">
-              
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-xs font-medium">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                <span>AI-Powered Urban Environmental Intelligence</span>
+            <div className="stagger flex flex-col justify-center lg:col-span-7 space-y-6">
+              {/* Eyebrow Badge */}
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--accent-line)] bg-[var(--accent-subtle)] px-3 py-1 shadow-[0_0_15px_var(--accent-subtle)] backdrop-blur-md sm:px-3.5 sm:py-1.5">
+                <Sparkles className="size-3.5 text-[var(--accent)]" />
+                <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase sm:text-[11px]">
+                  <span className="text-[var(--fg-muted)]">YOUR DAILY CLEAN AIR COMPANION</span>
+                  <span className="text-[var(--accent)]">• MADE FOR FAMILIES</span>
+                </div>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              {/* Main Headline */}
+              <h1 className="text-[var(--fg)] text-3xl leading-[1.08] font-black tracking-tight sm:text-5xl lg:text-5xl xl:text-[56px] 2xl:text-[64px]">
                 Understand the air. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400">
+                <span className="bg-gradient-to-r from-[var(--accent)] via-cyan-300 to-teal-300 bg-clip-text text-transparent">
                   Protect your world.
                 </span>
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
-                Navigate severe winter smog and urban air pollution with a scientifically grounded decision platform. 
-                VayuSenseX connects live atmospheric forecasts, household sensitivity, indoor mass-balance filtration, and sustainable alternatives into actionable family routines.
+              <p className="text-base sm:text-lg text-[var(--fg-muted)] max-w-2xl leading-relaxed">
+                Severe winter smog and city pollution can be stressful and confusing. VayuSenseX turns live air quality forecasts into clear, personalized daily advice—helping you pick the safest times to go outside, keep your indoor air clean, and plan healthier commutes.
               </p>
 
-              {/* Core Philosophy Badge */}
-              <div className="p-3.5 rounded-xl bg-midnight-900/90 border border-white/10 text-xs text-slate-400 flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                <span>
-                  <strong className="text-slate-200">The VayuSenseX Philosophy:</strong> The deterministic engine owns the calculations. AI owns the explanations. The user owns the decisions.
+              {/* Plain-Language Promise Card */}
+              <div className="p-4 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] shadow-[var(--shadow-sm)] text-xs text-[var(--fg-muted)] flex items-start gap-3">
+                <div className="size-2.5 rounded-full bg-[var(--accent)] mt-1 animate-pulse shrink-0" />
+                <span className="leading-relaxed">
+                  <strong className="text-[var(--fg)] font-bold">How VayuSenseX Helps:</strong> Trusted weather and air data handle the math, our AI explains it in plain words, and you stay in charge of your family&apos;s routine.
                 </span>
               </div>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
                 <button
                   onClick={onEnterDashboard}
-                  className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-midnight-950 font-bold text-sm shadow-glow-cyan hover:opacity-95 transition-all flex items-center justify-center space-x-2 group"
+                  id="hero-launch-btn"
+                  className="group flex h-11 sm:h-12 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-6 sm:px-8 text-sm sm:text-base font-bold whitespace-nowrap text-white shadow-xs transition-all hover:-translate-y-0.5 hover:bg-[var(--accent-strong)] hover:shadow-[0_0_20px_var(--accent-line)]"
                 >
-                  <span>Launch Live Intelligence</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  <span>Check Live Air Quality</span>
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </button>
                 <button
                   onClick={() => {
                     const el = document.getElementById('features-section');
                     el?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="px-6 py-3.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 border border-white/10 text-slate-200 font-semibold text-sm transition-all text-center"
+                  className="flex h-11 sm:h-12 items-center justify-center rounded-full bg-[var(--surface-2)] hover:bg-[var(--surface-3)] border border-[var(--border-strong)] px-6 sm:px-8 text-sm sm:text-base font-semibold text-[var(--fg)] shadow-xs transition-all"
                 >
-                  Explore Capabilities
+                  See What It Can Do
                 </button>
               </div>
 
-              {/* Key Features Bullet List */}
-              <div className="grid grid-cols-2 gap-3 pt-4 text-xs text-slate-400">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>CPCB & US EPA Dual Standards</span>
+              {/* Key Benefits List */}
+              <div className="grid grid-cols-2 gap-3 pt-2 text-xs text-[var(--fg-muted)] font-medium">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[var(--accent)] shrink-0" />
+                  <span>India (CPCB) &amp; US Air Scales</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>Atmospheric Inversion Detection</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[var(--accent)] shrink-0" />
+                  <span>Trapped Smog Alerts</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>Indoor Single-Zone Mass Balance</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[var(--accent)] shrink-0" />
+                  <span>Room Purifier &amp; DIY Filter Guide</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>What-If Scenario Simulation</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[var(--accent)] shrink-0" />
+                  <span>Compare Safer Daily Habits</span>
                 </div>
               </div>
-
             </div>
 
-            {/* Right Hero Live Interactive Atmospheric Card */}
+            {/* Right Hero Live Interactive Air Quality Card */}
             <div className="lg:col-span-5">
-              <div className="relative rounded-2xl glass-panel p-6 border border-white/15 shadow-glass">
-                
-                {/* Header of preview card */}
-                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+              <div className="group bg-[var(--surface-2)] text-[var(--fg)] relative overflow-hidden rounded-3xl border border-[var(--border)] p-6 sm:p-7 shadow-[var(--shadow-md)] transition-all hover:border-[var(--accent-line)]">
+                <div
+                  aria-hidden="true"
+                  className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-[var(--accent-subtle)] blur-[70px] pointer-events-none"
+                />
+
+                <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
                   <div>
-                    <span className="text-xs font-mono uppercase text-cyan-400 tracking-wider">Atmospheric Telemetry</span>
-                    <h3 className="text-lg font-bold text-white">{snapshot.location.city}</h3>
-                    <p className="text-xs text-slate-400">{snapshot.location.area}</p>
+                    <span className="text-[11px] font-mono uppercase text-[var(--accent)] font-bold tracking-wider">
+                      Live Air Check
+                    </span>
+                    <h3 className="text-xl font-black text-[var(--fg)] tracking-tight">{snapshot.location.city}</h3>
+                    <p className="text-xs text-[var(--fg-subtle)]">{snapshot.location.area}</p>
                   </div>
-                  
+
                   {/* Standard toggle inside card */}
-                  <div className="flex items-center bg-midnight-950 p-1 rounded-lg border border-white/10 text-[11px]">
+                  <div className="flex items-center bg-[var(--surface-3)] p-0.5 rounded-full border border-[var(--border)] text-xs">
                     <button
                       onClick={() => onStandardChange('CPCB')}
-                      className={`px-2 py-0.5 rounded font-medium ${standard === 'CPCB' ? 'bg-cyan-500 text-midnight-950 font-bold' : 'text-slate-400'}`}
+                      className={`px-2.5 py-1 rounded-full font-bold text-[11px] transition-all ${
+                        standard === 'CPCB' ? 'bg-[var(--accent)] text-white shadow-xs' : 'text-[var(--fg-muted)]'
+                      }`}
                     >
                       CPCB
                     </button>
                     <button
                       onClick={() => onStandardChange('USEPA')}
-                      className={`px-2 py-0.5 rounded font-medium ${standard === 'USEPA' ? 'bg-cyan-500 text-midnight-950 font-bold' : 'text-slate-400'}`}
+                      className={`px-2.5 py-1 rounded-full font-bold text-[11px] transition-all ${
+                        standard === 'USEPA' ? 'bg-[var(--accent)] text-white shadow-xs' : 'text-[var(--fg-muted)]'
+                      }`}
                     >
                       US EPA
                     </button>
@@ -142,55 +159,55 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 {/* AQI Value Display */}
                 <div className="py-6 flex items-center justify-between">
                   <div>
-                    <span className="text-xs text-slate-400">Current Computed Index ({standard})</span>
-                    <div className="flex items-baseline space-x-2 mt-1">
-                      <span className="text-6xl font-black font-mono tracking-tight" style={{ color: aqiResult.categoryColor }}>
+                    <span className="text-xs text-[var(--fg-subtle)] font-medium">Current Air Quality Score</span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-6xl font-black font-mono tracking-tight tnum" style={{ color: aqiResult.categoryColor }}>
                         {aqiResult.aqi}
                       </span>
-                      <span className="text-xs text-slate-400">/ 500</span>
+                      <span className="text-xs text-[var(--fg-subtle)] font-mono">/ 500</span>
                     </div>
-                    <div 
-                      className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider"
-                      style={{ 
+                    <div
+                      className="inline-block mt-2.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-xs"
+                      style={{
                         backgroundColor: `${aqiResult.categoryColor}20`,
                         color: aqiResult.categoryColor,
-                        border: `1px solid ${aqiResult.categoryColor}50`
+                        border: `1px solid ${aqiResult.categoryColor}50`,
                       }}
                     >
                       {aqiResult.categoryLabel}
                     </div>
                   </div>
 
-                  {/* Dominant Pollutant */}
+                  {/* Main Pollutant */}
                   <div className="text-right">
-                    <span className="text-xs text-slate-400">Dominant Driver</span>
-                    <p className="text-2xl font-bold font-mono text-cyan-300 uppercase mt-1">
+                    <span className="text-xs text-[var(--fg-subtle)] font-medium">Main Pollutant</span>
+                    <p className="text-2xl font-bold font-mono text-[var(--accent)] uppercase mt-1">
                       {aqiResult.dominantPollutant.toUpperCase()}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-[var(--fg-muted)] mt-1 font-mono">
                       {snapshot.pollutants.pm25} µg/m³
                     </p>
                   </div>
                 </div>
 
-                {/* Atmospheric Stagnation & Boundary Layer Bar */}
-                <div className="p-3 rounded-xl bg-midnight-900/80 border border-white/5 space-y-2 text-xs">
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span className="flex items-center space-x-1.5">
-                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Boundary Layer Height:</span>
+                {/* Weather & Smog Trapping Summary */}
+                <div className="p-3.5 rounded-2xl bg-[var(--surface-3)] border border-[var(--border)] space-y-2 text-xs">
+                  <div className="flex justify-between items-center text-[var(--fg-muted)]">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Layers className="size-3.5 text-[var(--accent)]" />
+                      <span>Smog Ceiling Height:</span>
                     </span>
                     <span className="font-mono font-bold text-amber-300">
-                      {snapshot.weather.boundaryLayerHeight} m (Inversion)
+                      {snapshot.weather.boundaryLayerHeight} m (Low Trap)
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span className="flex items-center space-x-1.5">
-                      <Wind className="w-3.5 h-3.5 text-teal-400" />
+                  <div className="flex justify-between items-center text-[var(--fg-muted)]">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Wind className="size-3.5 text-teal-400" />
                       <span>Surface Wind:</span>
                     </span>
-                    <span className="font-mono text-slate-200">
-                      {snapshot.weather.windSpeed} km/h (Stagnant)
+                    <span className="font-mono text-[var(--fg)]">
+                      {snapshot.weather.windSpeed} km/h ({(snapshot.weather.windSpeed ?? 0) < 6 ? 'Calm' : 'Breezy'})
                     </span>
                   </div>
                 </div>
@@ -198,102 +215,113 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 {/* Card CTA */}
                 <button
                   onClick={onEnterDashboard}
-                  className="w-full mt-5 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors"
+                  className="w-full mt-5 py-3 rounded-xl bg-[var(--accent-subtle)] hover:bg-[var(--accent)] hover:text-white border border-[var(--accent-line)] text-[var(--accent)] text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
                 >
-                  <span>Open Full Environmental Telemetry & Planner</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Open Full Air Quality &amp; Daily Planner</span>
+                  <ArrowRight className="size-3.5" />
                 </button>
-
               </div>
             </div>
-
           </div>
-
         </div>
       </section>
 
-      {/* 4 Architectural Pillars Section */}
-      <section id="features-section" className="py-20 border-t border-white/5 bg-midnight-900/50">
+      {/* 4 Everyday Pillars Section */}
+      <section id="features-section" className="py-20 border-t border-[var(--border)] bg-[var(--bg-subtle)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-cyan-400 mb-2">Scientific Architecture</h2>
-            <p className="text-3xl font-bold text-white sm:text-4xl">
-              Engineering Beyond a Simple Chatbot
-            </p>
-            <p className="text-sm text-slate-400 mt-3">
-              VayuSenseX separates deterministic mathematical models from generative explanations to guarantee reliability, zero hallucinated measurements, and actionable household impact.
+            <div className="mb-3 text-xs font-black tracking-[0.2em] text-[var(--accent)] uppercase">
+              Practical Everyday Tools
+            </div>
+            <h2 className="text-[var(--fg)] text-3xl font-black tracking-tight sm:text-5xl">
+              Built for Real Families, Not Just Scientists
+            </h2>
+            <p className="text-[var(--fg-muted)] mt-4 text-base leading-relaxed sm:text-lg">
+              Get clear answers you can actually use—from planning morning school runs to keeping your bedroom air safe without guessing.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            
             {/* Pillar 1 */}
-            <div className="glass-panel rounded-2xl p-6 glass-card-hover border border-white/10 flex flex-col justify-between">
+            <div className="group bg-[var(--surface-2)] relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border-faint)] p-7 shadow-[var(--shadow-sm)] transition-all hover:border-[var(--accent-line)] hover:shadow-[var(--shadow-md)]">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-5 text-cyan-400">
-                  <Gauge className="w-6 h-6" />
+                <span className="bg-[var(--surface-3)] text-[var(--accent)] relative mb-5 flex size-12 items-center justify-center rounded-2xl border border-[var(--border)] shadow-inner">
+                  <Gauge className="size-6" />
+                </span>
+                <div className="text-[var(--accent)] mb-2 text-xs font-bold tracking-wider uppercase">
+                  Step 01
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Atmospheric Intelligence</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Real-time CPCB (India) and US EPA multi-pollutant indices, atmospheric inversion heuristics, and boundary layer stagnation tracking.
+                <h3 className="text-[var(--fg)] text-xl font-bold">Live Air &amp; Smog Alerts</h3>
+                <p className="text-[var(--fg-muted)] mt-3 text-sm leading-relaxed">
+                  Check today&apos;s air quality in India or US scales and get early warnings when calm winds trap smoke near the ground.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-mono text-cyan-400 flex items-center">
-                <span>Module A & B Engine</span>
+              <div className="text-[var(--fg-subtle)] mt-6 flex items-center justify-between border-t border-[var(--border-strong)]/60 pt-4 text-xs font-semibold">
+                <span>Live Tracking</span>
+                <Badge tone="accent">CPCB &amp; EPA</Badge>
               </div>
             </div>
 
             {/* Pillar 2 */}
-            <div className="glass-panel rounded-2xl p-6 glass-card-hover border border-white/10 flex flex-col justify-between">
+            <div className="group bg-[var(--surface-2)] relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border-faint)] p-7 shadow-[var(--shadow-sm)] transition-all hover:border-[var(--accent-line)] hover:shadow-[var(--shadow-md)]">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center mb-5 text-teal-400">
-                  <Activity className="w-6 h-6" />
+                <span className="bg-[var(--surface-3)] text-teal-400 relative mb-5 flex size-12 items-center justify-center rounded-2xl border border-[var(--border)] shadow-inner">
+                  <Activity className="size-6" />
+                </span>
+                <div className="text-teal-400 mb-2 text-xs font-bold tracking-wider uppercase">
+                  Step 02
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Cleanest-Hour Planner</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Mathematical schedule optimization respecting school, work, and sensitive family members (asthma, elderly, toddlers) to minimize inhaled dose.
+                <h3 className="text-[var(--fg)] text-xl font-bold">Best Hours to Go Out</h3>
+                <p className="text-[var(--fg-muted)] mt-3 text-sm leading-relaxed">
+                  Plan walks, errands, and school commutes during the cleanest hours of the day—tailored for kids, seniors, and asthma care.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-mono text-teal-400 flex items-center">
-                <span>D = Σ(C_t · BR_t · Δt)</span>
+              <div className="text-[var(--fg-subtle)] mt-6 flex items-center justify-between border-t border-[var(--border-strong)]/60 pt-4 text-xs font-semibold">
+                <span>Daily Routine</span>
+                <Badge tone="positive">Family Safe</Badge>
               </div>
             </div>
 
             {/* Pillar 3 */}
-            <div className="glass-panel rounded-2xl p-6 glass-card-hover border border-white/10 flex flex-col justify-between">
+            <div className="group bg-[var(--surface-2)] relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border-faint)] p-7 shadow-[var(--shadow-sm)] transition-all hover:border-[var(--accent-line)] hover:shadow-[var(--shadow-md)]">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-5 text-emerald-400">
-                  <Home className="w-6 h-6" />
+                <span className="bg-[var(--surface-3)] text-emerald-400 relative mb-5 flex size-12 items-center justify-center rounded-2xl border border-[var(--border)] shadow-inner">
+                  <Home className="size-6" />
+                </span>
+                <div className="text-emerald-400 mb-2 text-xs font-bold tracking-wider uppercase">
+                  Step 03
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Indoor Mass-Balance</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Room volume CADR sizing, DIY box-fan filtration blueprints, particle penetration mechanics, and optimal ventilation timing windows.
+                <h3 className="text-[var(--fg)] text-xl font-bold">Cleaner Indoor Air</h3>
+                <p className="text-[var(--fg-muted)] mt-3 text-sm leading-relaxed">
+                  Find out what size air purifier your room needs, how to make an affordable DIY box-fan filter, and when to open windows.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-mono text-emerald-400 flex items-center">
-                <span>dC_in/dt ODE Solver</span>
+              <div className="text-[var(--fg-subtle)] mt-6 flex items-center justify-between border-t border-[var(--border-strong)]/60 pt-4 text-xs font-semibold">
+                <span>Home Air</span>
+                <Badge tone="positive">Room Sizing</Badge>
               </div>
             </div>
 
             {/* Pillar 4 */}
-            <div className="glass-panel rounded-2xl p-6 glass-card-hover border border-white/10 flex flex-col justify-between">
+            <div className="group bg-[var(--surface-2)] relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[var(--border-faint)] p-7 shadow-[var(--shadow-sm)] transition-all hover:border-[var(--accent-line)] hover:shadow-[var(--shadow-md)]">
               <div>
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-5 text-amber-400">
-                  <Sliders className="w-6 h-6" />
+                <span className="bg-[var(--surface-3)] text-amber-400 relative mb-5 flex size-12 items-center justify-center rounded-2xl border border-[var(--border)] shadow-inner">
+                  <Sliders className="size-6" />
+                </span>
+                <div className="text-amber-400 mb-2 text-xs font-bold tracking-wider uppercase">
+                  Step 04
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">What-If Simulation</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Simulate alternative household routines, commute shifts (metro vs car), and filtration runtimes with quantifiable particulate and CO₂e offsets.
+                <h3 className="text-[var(--fg)] text-xl font-bold">Compare Choices</h3>
+                <p className="text-[var(--fg-muted)] mt-3 text-sm leading-relaxed">
+                  Test simple swaps—like taking the metro instead of driving or running a filter overnight—and see how much pollution you avoid.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-mono text-amber-400 flex items-center">
-                <span>Cumulative Impact Ledger</span>
+              <div className="text-[var(--fg-subtle)] mt-6 flex items-center justify-between border-t border-[var(--border-strong)]/60 pt-4 text-xs font-semibold">
+                <span>What-If Tool</span>
+                <Badge tone="caution">Real Savings</Badge>
               </div>
             </div>
-
           </div>
-
         </div>
       </section>
     </div>

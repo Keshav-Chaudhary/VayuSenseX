@@ -26,13 +26,13 @@ export const ExposureWorkbench: React.FC<ExposureWorkbenchProps> = ({ currentOut
       <div>
         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 text-xs font-mono mb-2">
           <Activity className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Module F Deterministic Engine</span>
+          <span>Daily Breathing Exposure Check</span>
         </div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          Inhaled Particulate Dose & Schedule Optimizer
+          How Much Pollution Do You Breathe in a Day?
         </h1>
         <p className="text-slate-300 text-sm mt-1 max-w-3xl leading-relaxed">
-          Model personal particulate mass intake across daily microenvironments (sleep, outdoor exercise, commute, office) using official US EPA volumetric breathing rates.
+          Compare everyday routines—like morning jogs vs. cleaner afternoon walks—to see how much smoke and dust reaches your lungs across home, commute, and outdoor time.
         </p>
       </div>
 

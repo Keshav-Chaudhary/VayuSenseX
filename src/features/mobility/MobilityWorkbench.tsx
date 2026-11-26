@@ -6,7 +6,15 @@ import {
 import { evaluateCleanCorridorRoutes, URBAN_NODES } from '../../domain/mobility';
 import { compareTransportEmissions, TransportMode } from '../../domain/sustainability';
 
-export const MobilityWorkbench: React.FC = () => {
+interface MobilityWorkbenchProps {
+  currentOutdoorPm25?: number;
+  currentCity?: string;
+}
+
+export const MobilityWorkbench: React.FC<MobilityWorkbenchProps> = ({
+  currentOutdoorPm25 = 150,
+  currentCity = 'Active Location',
+}) => {
   const [activeTab, setActiveTab] = useState<'routing' | 'lifecycle'>('routing');
 
   // Dijkstra clean routing state
@@ -14,7 +22,11 @@ export const MobilityWorkbench: React.FC = () => {
   const [destinationId, setDestinationId] = useState<string>('NODE_RESIDENTIAL');
   const [preferredMode, setPreferredMode] = useState<TransportMode>('PETROL_CAR');
   const [optimizationGoal, setOptimizationGoal] = useState<'LOWEST_EXPOSURE' | 'SHORTEST_TIME' | 'BALANCED'>('LOWEST_EXPOSURE');
-  const [ambientPm25, setAmbientPm25] = useState<number>(180);
+  const [ambientPm25, setAmbientPm25] = useState<number>(currentOutdoorPm25);
+
+  React.useEffect(() => {
+    setAmbientPm25(currentOutdoorPm25);
+  }, [currentOutdoorPm25]);
 
   // Lifecycle emissions state
   const [distanceKm, setDistanceKm] = useState<number>(16);
@@ -43,13 +55,13 @@ export const MobilityWorkbench: React.FC = () => {
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-3">
             <Compass className="w-3.5 h-3.5" />
-            <span>Exposure-Aware Urban Mobility Engine</span>
+            <span>Safer Commute Planner • Sample City Routes ({currentCity})</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Clean Corridor Navigation & Transit Offsets
+            Safer Routes &amp; Lower-Pollution Travel
           </h1>
           <p className="text-slate-400 text-sm mt-1 max-w-3xl">
-            Optimizes urban journeys by evaluating trade-offs between travel duration and inhaled particulate dose ($D$). Steers pedestrians and commuters through vegetative canopy greenways and underground metro links away from diesel highway canyons.
+            Compare routes by travel time or cleaner air—helping walkers, cyclists, and commuters choose tree-lined streets or metro travel away from heavy diesel traffic.
           </p>
         </div>
 

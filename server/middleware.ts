@@ -8,11 +8,27 @@ interface RateLimitRecord {
 const rateLimitMap = new Map<string, RateLimitRecord>();
 
 /**
+ * Resets in-memory rate limits (primarily for testing and cache reset).
+ */
+export function clearRateLimits(): void {
+  rateLimitMap.clear();
+}
+
+/**
  * IP-based in-memory rate limiter (default: 30 requests per minute).
+ * Safely extracts client IP taking reverse proxies into account.
  */
 export function createRateLimiter(maxRequests = 30, windowMs = 60 * 1000) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const ip = req.ip || req.socket.remoteAddress || 'unknown-client';
+    // Determine client IP safely: req.ip (when trust proxy is set) or remoteAddress
+    const rawForwarded = req.headers['x-forwarded-for'];
+    const forwardedIp = Array.isArray(rawForwarded) 
+      ? rawForwarded[0]?.trim() 
+      : typeof rawForwarded === 'string' 
+      ? rawForwarded.split(',')[0]?.trim() 
+      : undefined;
+
+    const ip = req.ip || forwardedIp || req.socket.remoteAddress || 'unknown-client';
     const now = Date.now();
     const record = rateLimitMap.get(ip);
 
@@ -56,8 +72,12 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   res.setHeader('X-XSS-Protection', '1; mode=block');
   // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // Strict Transport Security (HSTS)
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  
+  // Strict Transport Security (HSTS) - enabled strictly in production HTTPS environments
+  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  if (process.env.NODE_ENV === 'production' && isHttps) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
   next();
 }
 

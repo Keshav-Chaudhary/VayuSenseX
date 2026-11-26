@@ -6,29 +6,31 @@
   "auditDate": "2026-11-21",
   "status": "Production-Ready",
   "metrics": {
-    "totalAutomatedTests": 80,
-    "totalTestSuites": 21,
+    "totalAutomatedTests": 922,
+    "totalTestSuites": 32,
     "testPassRate": 100.0,
     "typeScriptCompilationErrors": 0,
     "npmVulnerabilities": 0,
-    "trackedRepositorySizeMB": 0.638,
+    "trackedRepositorySizeMB": 0.837,
     "repositorySizeLimitMB": 10.0,
-    "repositoryBufferMB": 9.362,
-    "productionBundleGzipKB": 161.4,
+    "repositoryBufferMB": 9.163,
+    "productionBundleGzipKB": 120.7,
     "cacheHitLatencyMs": "< 1.0",
     "accessibilityStandard": "WCAG 2.2 AA",
     "contrastRatioMin": "12.4:1",
-    "supportedAQIStandards": ["CPCB NAQI (India)", "US EPA AQI"]
+    "supportedAQIStandards": ["CPCB NAQI (India)", "US EPA AQI"],
+    "statementCoveragePercent": 81.8,
+    "lineCoveragePercent": 83.4
   },
   "scientificEngines": [
     "Indian CPCB NAQI & US EPA AQI Linear Breakpoint Interpolation",
     "Single-Zone Non-Steady Mass Balance & Clean Air Delivery Rate (CADR)",
     "US EPA Inhaled Particulate Dose (D = Σ C · BR · Δt)",
     "Well-to-Wheel (WTW) Transportation Lifecycle Emissions",
-    "Atmospheric Boundary Layer Stagnation & Ventilation Index",
-    "Dijkstra Clean Corridor Microclimate Transit Pathfinder",
-    "Anti-Double-Counting Cumulative Impact Ledger",
-    "Privacy-Preserving Community Resilience Hub",
+    "Atmospheric Boundary Layer Stagnation & Ventilation Index (Vc = U · Hm)",
+    "Dijkstra 3-Way Clean Corridor Microclimate Transit Pathfinder (Distance vs Exposure vs Time)",
+    "Anti-Double-Counting Cumulative Impact Ledger with Deduplication & Reversion Guards",
+    "Privacy-Preserving Community Resilience Hub (Modeled Archetype - Zero Remote PII)",
     "Fact-ID Grounding Registry & Anti-Hallucination Validator (±5% tolerance)"
   ],
   "compliance": {
@@ -36,9 +38,12 @@
     "offlineDeterministicFallback": true,
     "serverSecurityGateway": true,
     "helmetGradeCSP": true,
-    "rateLimiting": "30 req/min sliding window",
+    "rateLimiting": "30 req/min sliding window (reverse-proxy aware)",
     "payloadCapKB": 15,
+    "zodValidation": true,
     "privacyLocalFirst": true,
-    "zeroRemotePII": true
+    "zeroRemotePII": true,
+    "conditionalProductionHSTS": true,
+    "fullSha256CacheHex": true
   }
 }

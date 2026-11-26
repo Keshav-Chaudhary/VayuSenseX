@@ -97,7 +97,9 @@ export class ImpactLedgerStore {
 
     const newEntry: ImpactLedgerEntry = {
       ...entryData,
-      id: `impact-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? `impact-${crypto.randomUUID()}`
+        : `impact-${Date.now()}-${entries.length}`,
       deduplicationHash,
       plannedAt: entryData.status === 'PLANNED' ? new Date().toISOString() : undefined,
       completedAt: entryData.status === 'COMPLETED' ? new Date().toISOString() : undefined,
@@ -120,8 +122,8 @@ export class ImpactLedgerStore {
     const updated: ImpactLedgerEntry = {
       ...existing,
       status: newStatus,
-      completedAt: newStatus === 'COMPLETED' ? new Date().toISOString() : existing.completedAt,
-      plannedAt: newStatus === 'PLANNED' ? (existing.plannedAt || new Date().toISOString()) : existing.plannedAt,
+      completedAt: newStatus === 'COMPLETED' ? (existing.completedAt || new Date().toISOString()) : undefined,
+      plannedAt: newStatus === 'PLANNED' || newStatus === 'COMPLETED' ? (existing.plannedAt || new Date().toISOString()) : undefined,
     };
 
     entries[index] = updated;
@@ -200,6 +202,45 @@ export class ImpactLedgerStore {
 
   static exportLedgerJSON(): string {
     return JSON.stringify(this.getEntries(), null, 2);
+  }
+
+  /**
+   * Imports external ledger records with strict deduplication hash enforcement.
+   * Guarantees duplicate JSON imports cannot artificially inflate environmental savings.
+   */
+  static importLedgerJSON(jsonStr: string): { importedCount: number; duplicateCount: number } {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (!Array.isArray(parsed)) return { importedCount: 0, duplicateCount: 0 };
+
+      const existingEntries = this.getEntries();
+      const existingHashes = new Set(existingEntries.map(e => e.deduplicationHash));
+
+      let importedCount = 0;
+      let duplicateCount = 0;
+
+      for (const item of parsed) {
+        if (!item || typeof item !== 'object' || !item.actionId || !item.date) continue;
+        const dedupHash = item.deduplicationHash || createDeduplicationHash(item.actionId, item.date, item.memberId);
+
+        if (existingHashes.has(dedupHash)) {
+          duplicateCount++;
+          continue; // Strict deduplication: reject repeat imports from inflating totals
+        }
+
+        existingEntries.push({
+          ...item,
+          deduplicationHash: dedupHash,
+        });
+        existingHashes.add(dedupHash);
+        importedCount++;
+      }
+
+      this.saveEntries(existingEntries);
+      return { importedCount, duplicateCount };
+    } catch {
+      return { importedCount: 0, duplicateCount: 0 };
+    }
   }
 
   static clearLedger(): void {

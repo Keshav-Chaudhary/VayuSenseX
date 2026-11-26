@@ -5,6 +5,32 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Carbon Design System Tokens (Shared with Challenge 5)
+        bg: 'var(--bg)',
+        'bg-subtle': 'var(--bg-subtle)',
+        surface: 'var(--surface)',
+        'surface-1': 'var(--surface-1)',
+        'surface-2': 'var(--surface-2)',
+        'surface-3': 'var(--surface-3)',
+        border: 'var(--border)',
+        'border-strong': 'var(--border-strong)',
+        'border-faint': 'var(--border-faint)',
+        fg: 'var(--fg)',
+        'fg-muted': 'var(--fg-muted)',
+        'fg-subtle': 'var(--fg-subtle)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          strong: 'var(--accent-strong)',
+          subtle: 'var(--accent-subtle)',
+          line: 'var(--accent-line)',
+          fg: 'var(--accent-fg)',
+        },
+        positive: 'var(--positive)',
+        caution: 'var(--caution)',
+        critical: 'var(--critical)',
+        neutral: 'var(--neutral)',
+
+        // VayuSenseX Domain Palette (Retained for Atmospheric Precision)
         midnight: {
           950: '#04070d',
           900: '#060b13',
@@ -33,7 +59,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Outfit', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       boxShadow: {

@@ -27,6 +27,11 @@ export interface NumericalClaim {
   unit: string;
 }
 
+export interface ConversationTurn {
+  role: 'user' | 'model';
+  text: string;
+}
+
 export interface GroundedAIResponse {
   headline: string;
   summary: string;
@@ -37,4 +42,11 @@ export interface GroundedAIResponse {
   isDeterministicFallback: boolean;
   groundingStatus: 'VERIFIED' | 'FALLBACK_TRIGGERED';
   generatedAt: string;
+  model?: string;
+  fallbackReason?: string;
+  tokenUsage?: {
+    promptTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+  };
 }

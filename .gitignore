@@ -43,3 +43,8 @@ playwright/.cache/
 
 # Build info
 tsconfig.tsbuildinfo
+
+# Firebase
+.firebase/
+firebase-debug*.log
+

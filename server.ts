@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { Sha256LruCache } from './server/cache';
 import { 
   createRateLimiter, 
@@ -8,12 +10,45 @@ import {
 } from './server/middleware';
 import { 
   executeServerGroundedBriefing, 
-  executeServerGroundedAnswer 
+  executeServerGroundedAnswer,
+  checkGeminiHealth,
 } from './server/aiService';
+
+function loadLocalEnv(): void {
+  if (process.env.NODE_ENV === 'test') return;
+  for (const fileName of ['.env.local', '.env']) {
+    const filePath = path.join(process.cwd(), fileName);
+    if (!fs.existsSync(filePath)) continue;
+    const lines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/);
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const eqIdx = line.indexOf('=');
+      if (eqIdx <= 0) continue;
+      const key = line.slice(0, eqIdx).trim();
+      let val = line.slice(eqIdx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
+
+loadLocalEnv();
+import { 
+  BriefingRequestSchema, 
+  AssistRequestSchema 
+} from './server/schemas';
 import { GroundedAIResponse } from './src/services/ai/types';
 
 export const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust reverse proxies (Render, Vercel, Nginx, Cloudflare) for accurate client IP resolution
+app.set('trust proxy', 1);
 
 // 1. Perimeter Security Middleware
 app.use(securityHeadersMiddleware);
@@ -43,18 +78,21 @@ const apiLimiter = createRateLimiter(30, 60 * 1000);
 app.use('/api/', apiLimiter);
 
 // 5. In-Memory SHA-256 LRU Cache
-const aiResponseCache = new Sha256LruCache<GroundedAIResponse>(100, 15 * 60 * 1000);
+export const aiResponseCache = new Sha256LruCache<GroundedAIResponse>(100, 15 * 60 * 1000);
 
 // --- REST Endpoints ---
 
 /**
  * Health check & telemetry status
  */
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', async (req, res) => {
+  const probe = req.query.probe === 'true';
+  const gemini = await checkGeminiHealth(probe);
   res.status(200).json({
     status: 'healthy',
-    version: '0.4.0',
+    version: '0.6.0',
     service: 'VayuSenseX Gateway',
+    gemini,
     timestamp: new Date().toISOString(),
   });
 });
@@ -64,13 +102,18 @@ app.get('/api/health', (_req, res) => {
  */
 app.post('/api/briefing', async (req, res, next) => {
   try {
-    const { snapshot, plan, registry, standard } = req.body;
-    if (!snapshot || !plan || !registry) {
-      res.status(400).json({ error: 'Missing required payload: snapshot, plan, or registry' });
+    const parseResult = BriefingRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({
+        error: 'Invalid Request Payload',
+        details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
+      });
       return;
     }
 
-    // SHA-256 Cache Check
+    const { snapshot, plan, registry, standard } = parseResult.data;
+
+    // SHA-256 Cache Check (Full 64-char hex digest)
     const cacheKey = aiResponseCache.hashKey({
       city: snapshot.location?.city,
       pm25: snapshot.pollutants?.pm25,
@@ -86,7 +129,7 @@ app.post('/api/briefing', async (req, res, next) => {
       return;
     }
 
-    const response = await executeServerGroundedBriefing(snapshot, plan, registry, standard || 'CPCB');
+    const response = await executeServerGroundedBriefing(snapshot as any, plan as any, registry as any, standard || 'CPCB');
     aiResponseCache.set(cacheKey, response);
 
     res.setHeader('X-Cache-Status', 'MISS');
@@ -101,36 +144,63 @@ app.post('/api/briefing', async (req, res, next) => {
  */
 app.post('/api/assist', async (req, res, next) => {
   try {
-    const { question, snapshot, plan, registry } = req.body;
-    if (!question || !snapshot || !plan || !registry) {
-      res.status(400).json({ error: 'Missing required payload: question, snapshot, plan, or registry' });
+    const parseResult = AssistRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({
+        error: 'Invalid Request Payload',
+        details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
+      });
       return;
     }
 
-    const cacheKey = aiResponseCache.hashKey({
-      q: question.trim().toLowerCase(),
-      pm25: snapshot.pollutants?.pm25,
-      city: snapshot.location?.city,
-    });
+    const { question, snapshot, plan, registry, history } = parseResult.data;
+    const isMultiTurn = Array.isArray(history) && history.length > 0;
 
-    const cached = aiResponseCache.get(cacheKey);
-    if (cached) {
-      res.setHeader('X-Cache-Status', 'HIT');
-      res.status(200).json(cached);
+    if (!isMultiTurn) {
+      const cacheKey = aiResponseCache.hashKey({
+        q: question.trim().toLowerCase(),
+        pm25: snapshot.pollutants?.pm25,
+        city: snapshot.location?.city,
+      });
+
+      const cached = aiResponseCache.get(cacheKey);
+      if (cached) {
+        res.setHeader('X-Cache-Status', 'HIT');
+        res.status(200).json(cached);
+        return;
+      }
+
+      const response = await executeServerGroundedAnswer(question, snapshot as any, plan as any, registry as any, []);
+      aiResponseCache.set(cacheKey, response);
+
+      res.setHeader('X-Cache-Status', 'MISS');
+      res.status(200).json(response);
       return;
     }
 
-    const response = await executeServerGroundedAnswer(question, snapshot, plan, registry);
-    aiResponseCache.set(cacheKey, response);
-
-    res.setHeader('X-Cache-Status', 'MISS');
+    const response = await executeServerGroundedAnswer(question, snapshot as any, plan as any, registry as any, history);
+    res.setHeader('X-Cache-Status', 'BYPASS');
     res.status(200).json(response);
   } catch (err) {
     next(err);
   }
 });
 
-// 6. Global error sanitizer (CWE-209 mitigation)
+// 6. Serve production static bundle if built (unified App Hosting / Render / Docker mode)
+const distDir = path.join(process.cwd(), 'dist');
+const distIndex = path.join(distDir, 'index.html');
+if (process.env.NODE_ENV !== 'test' && fs.existsSync(distIndex)) {
+  app.use(express.static(distDir, { maxAge: '1y', index: false }));
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+      res.sendFile(distIndex);
+      return;
+    }
+    next();
+  });
+}
+
+// 7. Global error sanitizer (CWE-209 mitigation)
 app.use(safeErrorHandler);
 
 if (process.env.NODE_ENV !== 'test') {

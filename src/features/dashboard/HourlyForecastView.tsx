@@ -8,22 +8,34 @@ interface HourlyForecastViewProps {
   standard: AQIStandard;
 }
 
-export const HourlyForecastView: React.FC<HourlyForecastViewProps> = ({ forecast, standard }) => {
+export const HourlyForecastView: React.FC<HourlyForecastViewProps> = React.memo(({ forecast, standard }) => {
   if (!forecast || forecast.length === 0) return null;
 
   return (
-    <div className="glass-panel rounded-2xl p-6 border border-white/10 space-y-4">
+    <section aria-label="24-Hour Pollution Dispersion Forecast" className="glass-panel rounded-2xl p-6 border border-white/10 space-y-4">
+      {/* Screen-Reader Accessible Twin Representation */}
+      <div className="sr-only">
+        <h3>24-Hour Hourly Forecast Summary ({standard} Standard)</h3>
+        <ul>
+          {forecast.map((pt) => (
+            <li key={`sr-${pt.timestamp}`}>
+              {pt.hourLabel}: PM2.5 {pt.pm25} µg/m³, {standard} AQI {standard === 'CPCB' ? pt.cpcbAqi : pt.usepaAqi},
+              wind {pt.windSpeed} km/h{pt.isCleanestWindow ? ' (Cleanest Activity Window)' : ''}.
+            </li>
+          ))}
+        </ul>
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/10 gap-2">
         <div>
           <div className="flex items-center space-x-2 text-xs font-mono uppercase tracking-wider text-cyan-400">
             <Clock className="w-3.5 h-3.5" />
-            <span>24-Hour Atmospheric Timeline</span>
+            <span>Next 24 Hours</span>
           </div>
-          <h2 className="text-lg font-bold text-white mt-0.5">Pollution Dispersion & Hourly Forecast</h2>
+          <h2 className="text-lg font-bold text-white mt-0.5">Hour-by-Hour Air Quality Forecast</h2>
         </div>
         <div className="flex items-center space-x-2 text-xs text-slate-400">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-          <span>Cleanest Activity Window Highlighted</span>
+          <span>Best Hours for Going Outside Highlighted</span>
         </div>
       </div>
 
@@ -82,6 +94,6 @@ export const HourlyForecastView: React.FC<HourlyForecastViewProps> = ({ forecast
           );
         })}
       </div>
-    </div>
+    </section>
   );
-};
+});

@@ -6,10 +6,18 @@ import {
 import { CommunityStore } from '../../domain/community/community-store';
 import { CommunityActionPledge } from '../../domain/community/types';
 
-export const CommunityHub: React.FC = () => {
+interface CommunityHubProps {
+  currentCity?: string;
+}
+
+export const CommunityHub: React.FC<CommunityHubProps> = ({ currentCity = 'Local Neighborhood' }) => {
   const [pledges, setPledges] = useState<CommunityActionPledge[]>(() => CommunityStore.getPledges());
-  const [stats, setStats] = useState(() => CommunityStore.getAggregatedStats());
+  const [stats, setStats] = useState(() => CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
   const [notification, setNotification] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setStats(CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
+  }, [currentCity]);
 
   const notify = (msg: string) => {
     setNotification(msg);
@@ -19,14 +27,14 @@ export const CommunityHub: React.FC = () => {
   const handleTogglePledge = (id: string) => {
     const updated = CommunityStore.togglePledge(id);
     setPledges([...updated]);
-    setStats(CommunityStore.getAggregatedStats());
+    setStats(CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
     notify('Pledge status updated');
   };
 
   const handleIncrementCompletion = (id: string) => {
     const updated = CommunityStore.incrementCompletion(id);
     setPledges([...updated]);
-    setStats(CommunityStore.getAggregatedStats());
+    setStats(CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
     notify('Day logged! Collective neighborhood savings updated');
   };
 
@@ -48,13 +56,13 @@ export const CommunityHub: React.FC = () => {
           <div>
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-3">
               <Users className="w-3.5 h-3.5" />
-              <span>Community Resilience & Collective Action Hub</span>
+              <span>Modeled Neighborhood Archetype (Local-First Privacy — Zero Remote PII)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Neighborhood Clean Air Collective
             </h1>
             <p className="text-slate-400 text-sm mt-1 max-w-3xl">
-              Coordinated citizen actions to suppress urban dust, eliminate biomass combustion, and shield vulnerable neighbors during severe winter smog episodes.
+              Modeled collective citizen actions to suppress urban dust, eliminate biomass combustion, and shield vulnerable neighbors during severe winter smog episodes. All calculations execute locally with zero cloud surveillance.
             </p>
           </div>
 

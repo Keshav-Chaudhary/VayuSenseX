@@ -27,10 +27,13 @@ jobs:
       - name: Security Vulnerability Audit
         run: npm audit --audit-level=high
 
+      - name: Static Analysis (Oxlint)
+        run: npm run lint
+
       - name: Strict TypeScript Compilation Check
         run: npm run typecheck
 
-      - name: Run Vitest Automated Test Suite (80 Tests)
+      - name: Run Vitest Automated Test Suite (100 Tests)
         run: npm test
 
       - name: Verify Repository Size (< 10 MB Limit)

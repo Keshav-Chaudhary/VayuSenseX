@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Navbar, ActiveNavView } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { LandingPage } from '../features/landing/LandingPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
-import { IndoorWorkbench } from '../features/indoor/IndoorWorkbench';
-import { ExposureWorkbench } from '../features/exposure/ExposureWorkbench';
-import { MobilityWorkbench } from '../features/mobility/MobilityWorkbench';
-import { SimulatorWorkbench } from '../features/simulator/SimulatorWorkbench';
-import { MethodologyPage } from '../features/methodology/MethodologyPage';
-import { HouseholdWorkbench } from '../features/household/HouseholdWorkbench';
-import { PlannerWorkbench } from '../features/planner/PlannerWorkbench';
-import { AIAssistantWorkbench } from '../features/assistant/AIAssistantWorkbench';
-import { ImpactWorkbench } from '../features/impact/ImpactWorkbench';
-import { CommunityHub } from '../features/community/CommunityHub';
+
+const IndoorWorkbench = lazy(() => import('../features/indoor/IndoorWorkbench').then(m => ({ default: m.IndoorWorkbench })));
+const ExposureWorkbench = lazy(() => import('../features/exposure/ExposureWorkbench').then(m => ({ default: m.ExposureWorkbench })));
+const MobilityWorkbench = lazy(() => import('../features/mobility/MobilityWorkbench').then(m => ({ default: m.MobilityWorkbench })));
+const SimulatorWorkbench = lazy(() => import('../features/simulator/SimulatorWorkbench').then(m => ({ default: m.SimulatorWorkbench })));
+const MethodologyPage = lazy(() => import('../features/methodology/MethodologyPage').then(m => ({ default: m.MethodologyPage })));
+const HouseholdWorkbench = lazy(() => import('../features/household/HouseholdWorkbench').then(m => ({ default: m.HouseholdWorkbench })));
+const PlannerWorkbench = lazy(() => import('../features/planner/PlannerWorkbench').then(m => ({ default: m.PlannerWorkbench })));
+const AIAssistantWorkbench = lazy(() => import('../features/assistant/AIAssistantWorkbench').then(m => ({ default: m.AIAssistantWorkbench })));
+const ImpactWorkbench = lazy(() => import('../features/impact/ImpactWorkbench').then(m => ({ default: m.ImpactWorkbench })));
+const CommunityHub = lazy(() => import('../features/community/CommunityHub').then(m => ({ default: m.CommunityHub })));
 import { HouseholdStore } from '../domain/household/household-store';
 import { HouseholdProfile } from '../domain/household/types';
 import { SAMPLE_DELHI_SMOG, SAMPLE_BENGALURU_MODERATE } from '../domain/sample-data';
@@ -35,10 +36,12 @@ export const App: React.FC = () => {
   const [isCached, setIsCached] = useState<boolean>(false);
   const [isStale, setIsStale] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [telemetryError, setTelemetryError] = useState<string | null>(null);
 
   // Load telemetry for given coordinates
   const loadTelemetry = useCallback(async (lat: number, lon: number, cityName: string, areaName: string) => {
     setIsLoading(true);
+    setTelemetryError(null);
     try {
       const liveData = await fetchLiveEnvironmentalData(lat, lon, cityName, areaName);
       setSnapshot({
@@ -61,12 +64,13 @@ export const App: React.FC = () => {
       setIsCached(liveData.isCached);
       setIsStale(liveData.isStale);
     } catch {
-      // Graceful fallback to calibrated sample profile if network is offline
+      // Explicit offline degraded mode — never silently pretend fallback is live
       const fallback = cityName.toLowerCase().includes('bengaluru') ? SAMPLE_BENGALURU_MODERATE : SAMPLE_DELHI_SMOG;
       setSnapshot(fallback);
       setProvenance('ILLUSTRATIVE');
       setIsCached(false);
       setIsStale(true);
+      setTelemetryError('Live Open-Meteo telemetry is currently unreachable. Displaying clearly labeled illustrative fallback data.');
     } finally {
       setIsLoading(false);
     }
@@ -104,11 +108,11 @@ export const App: React.FC = () => {
   const activeOutdoorPm25 = snapshot.pollutants.pm25 ?? 150;
 
   return (
-    <div className="flex flex-col min-h-screen bg-midnight-950 text-slate-100">
+    <div className="flex flex-col min-h-screen bg-[var(--bg)] text-[var(--fg)] font-sans">
       {/* Skip to Content for Accessibility (WCAG 2.2 AA) */}
       <a 
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-cyan-500 text-midnight-950 font-bold rounded-lg shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-[var(--accent)] text-white font-bold rounded-xl shadow-[var(--shadow-md)]"
       >
         Skip to main content
       </a>
@@ -149,56 +153,68 @@ export const App: React.FC = () => {
             isStale={isStale}
             hourlyForecast={hourlyForecast}
             cleanestForecastWindow={cleanestWindow}
+            telemetryError={telemetryError}
           />
         )}
 
-        {currentView === 'household' && (
-          <HouseholdWorkbench onProfileChange={setHouseholdProfile} />
-        )}
+        <Suspense
+          fallback={
+            <div className="max-w-7xl mx-auto px-4 py-12 text-center text-sm text-[var(--fg-muted)] font-mono">
+              Loading environmental workbench...
+            </div>
+          }
+        >
+          {currentView === 'household' && (
+            <HouseholdWorkbench onProfileChange={setHouseholdProfile} />
+          )}
 
-        {currentView === 'planner' && (
-          <PlannerWorkbench
-            profile={householdProfile}
-            hourlyForecast={hourlyForecast}
-            currentOutdoorPm25={activeOutdoorPm25}
-          />
-        )}
+          {currentView === 'planner' && (
+            <PlannerWorkbench
+              profile={householdProfile}
+              hourlyForecast={hourlyForecast}
+              currentOutdoorPm25={activeOutdoorPm25}
+            />
+          )}
 
-        {currentView === 'assistant' && (
-          <AIAssistantWorkbench
-            profile={householdProfile}
-            snapshot={snapshot}
-            hourlyForecast={hourlyForecast}
-          />
-        )}
+          {currentView === 'assistant' && (
+            <AIAssistantWorkbench
+              profile={householdProfile}
+              snapshot={snapshot}
+              hourlyForecast={hourlyForecast}
+            />
+          )}
 
-        {currentView === 'indoor' && (
-          <IndoorWorkbench currentOutdoorPm25={activeOutdoorPm25} />
-        )}
+          {currentView === 'indoor' && (
+            <IndoorWorkbench currentOutdoorPm25={activeOutdoorPm25} />
+          )}
 
-        {currentView === 'exposure' && (
-          <ExposureWorkbench currentOutdoorPm25={activeOutdoorPm25} />
-        )}
+          {currentView === 'exposure' && (
+            <ExposureWorkbench currentOutdoorPm25={activeOutdoorPm25} />
+          )}
 
-        {currentView === 'mobility' && (
-          <MobilityWorkbench />
-        )}
+          {currentView === 'mobility' && (
+            <MobilityWorkbench
+              currentOutdoorPm25={activeOutdoorPm25}
+              currentCity={snapshot.location.city}
+            />
+          )}
 
-        {currentView === 'impact' && (
-          <ImpactWorkbench />
-        )}
+          {currentView === 'impact' && (
+            <ImpactWorkbench />
+          )}
 
-        {currentView === 'community' && (
-          <CommunityHub />
-        )}
+          {currentView === 'community' && (
+            <CommunityHub currentCity={snapshot.location.city} />
+          )}
 
-        {currentView === 'simulator' && (
-          <SimulatorWorkbench currentOutdoorPm25={activeOutdoorPm25} />
-        )}
+          {currentView === 'simulator' && (
+            <SimulatorWorkbench currentOutdoorPm25={activeOutdoorPm25} />
+          )}
 
-        {currentView === 'methodology' && (
-          <MethodologyPage />
-        )}
+          {currentView === 'methodology' && (
+            <MethodologyPage />
+          )}
+        </Suspense>
       </main>
 
       {/* Persistent Footer */}

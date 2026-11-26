@@ -13,7 +13,7 @@ function getDirectorySize(dirPath) {
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name);
-    if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') {
+    if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist' || entry.name === 'coverage') {
       continue;
     }
 
