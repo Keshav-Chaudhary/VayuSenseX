@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Home, Cpu, AlertTriangle } from 'lucide-react';
-import { calculateRoomVolume, evaluateCADRSizing, solveIndoorMassBalance, estimateDIYBoxFanCADR, INDOOR_POLLUTION_SOURCES, HOUSEPLANT_MYTH_GUIDANCE } from '../../domain/indoor';
+import { Home } from 'lucide-react';
+import { calculateRoomVolume, evaluateCADRSizing, solveIndoorMassBalance, estimateDIYBoxFanCADR, INDOOR_POLLUTION_SOURCES } from '../../domain/indoor';
+import { MassBalancePanel } from './MassBalancePanel';
+import { IndoorGuidanceCards } from './IndoorGuidanceCards';
 
 interface IndoorWorkbenchProps {
   currentOutdoorPm25: number;
@@ -96,8 +98,9 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
           {/* Dimension Inputs */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-xs font-mono text-slate-400">Length (m)</label>
+              <label htmlFor="indoor-length" className="text-xs font-mono text-slate-400">Length (m)</label>
               <input
+                id="indoor-length"
                 type="number"
                 min="1"
                 max="25"
@@ -108,8 +111,9 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
               />
             </div>
             <div>
-              <label className="text-xs font-mono text-slate-400">Width (m)</label>
+              <label htmlFor="indoor-width" className="text-xs font-mono text-slate-400">Width (m)</label>
               <input
+                id="indoor-width"
                 type="number"
                 min="1"
                 max="25"
@@ -120,8 +124,9 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
               />
             </div>
             <div>
-              <label className="text-xs font-mono text-slate-400">Height (m)</label>
+              <label htmlFor="indoor-height" className="text-xs font-mono text-slate-400">Height (m)</label>
               <input
+                id="indoor-height"
                 type="number"
                 min="2"
                 max="6"
@@ -142,10 +147,11 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
           {/* Purifier CADR Slider */}
           <div>
             <div className="flex justify-between items-center text-xs mb-1">
-              <span className="font-semibold text-slate-300">Clean Air Delivery Rate (CADR)</span>
+              <label htmlFor="indoor-purifier-cadr" className="font-semibold text-slate-300">Clean Air Delivery Rate (CADR)</label>
               <span className="font-mono text-cyan-400 font-bold">{purifierCADR} m³/h</span>
             </div>
             <input
+              id="indoor-purifier-cadr"
               type="range"
               min="0"
               max="650"
@@ -216,162 +222,20 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
         </div>
 
         {/* Dynamic Mass-Balance Output (7 Cols) */}
-        <div className="lg:col-span-7 glass-panel rounded-2xl p-6 border border-white/10 flex flex-col justify-between space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-white flex items-center justify-between pb-3 border-b border-white/10">
-              <span>2. Single-Zone Mass-Balance Differential Solution</span>
-              <span className="text-xs font-mono text-cyan-400">Analytical ODE Solver</span>
-            </h2>
-
-            {/* Microenvironment inputs: Outdoor & Sources */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Outdoor PM2.5 Concentration (C_out)
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="range"
-                    min="10"
-                    max="500"
-                    value={outdoorConcentration}
-                    onChange={(e) => setOutdoorConcentration(parseInt(e.target.value))}
-                    className="flex-1 accent-cyan-500 cursor-pointer"
-                  />
-                  <span className="font-mono font-bold text-xs text-cyan-300 w-16 text-right">
-                    {outdoorConcentration} µg/m³
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-300 font-semibold block mb-1">
-                  Envelope Ventilation Rate (λ)
-                </label>
-                <select
-                  value={airExchangeACH}
-                  onChange={(e) => setAirExchangeACH(parseFloat(e.target.value))}
-                  className="w-full px-3 py-1.5 bg-midnight-900 border border-white/10 rounded-xl text-white font-mono text-xs focus:outline-none"
-                >
-                  <option value={0.2}>0.2 ACH (Weatherstripped / Sealed)</option>
-                  <option value={0.4}>0.4 ACH (Standard Closed Windows)</option>
-                  <option value={1.2}>1.2 ACH (Window Ajar / Drafty)</option>
-                  <option value={3.0}>3.0 ACH (Open Windows - Cross Flush)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Indoor Pollution Source Toggles */}
-            <div className="mt-5">
-              <span className="text-xs font-semibold text-slate-300 block mb-2">
-                Active Indoor Pollution Sources (Generation S):
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(INDOOR_POLLUTION_SOURCES).map(([key, src]) => {
-                  const isActive = activeSources.includes(key);
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => toggleSource(key)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-                        isActive
-                          ? 'bg-rose-950/70 border-rose-600 text-rose-200'
-                          : 'bg-midnight-900/60 border-white/5 text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {isActive ? '🔥 ' : '+ '}
-                      {src.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Mass-Balance Solved Metrics Display */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 rounded-2xl bg-midnight-900/80 border border-white/10">
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Steady-State Indoor PM2.5</span>
-              <div className="text-3xl font-black font-mono text-cyan-300 mt-1">
-                {massBalanceResult.steadyStateConcentrationUgM3}{' '}
-                <span className="text-xs font-normal text-slate-400">µg/m³</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                vs {outdoorConcentration} µg/m³ outdoor
-              </p>
-            </div>
-
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Purifier Cleanliness Gain</span>
-              <div className="text-3xl font-black font-mono text-emerald-400 mt-1">
-                {massBalanceResult.purifierBenefitPercent}%
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">particulate reduction</p>
-            </div>
-
-            <div>
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Time to 90% Cleanup</span>
-              <div className="text-3xl font-black font-mono text-amber-300 mt-1">
-                {massBalanceResult.timeTo90PercentCleanupMinutes ?? 'N/A'}{' '}
-                <span className="text-xs font-normal text-slate-400">mins</span>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">to reach equilibrium</p>
-            </div>
-          </div>
-
-          {/* Mathematical Formula Footnote */}
-          <p className="text-[11px] text-slate-400 font-mono border-t border-white/5 pt-3">
-            dC_in/dt = P·λ·C_out + (S/V) - [λ + k + (η·Q/V)] · C_in | Removal rate R = {massBalanceResult.totalRemovalRateACH} h⁻¹
-          </p>
-        </div>
+        <MassBalancePanel
+          outdoorConcentration={outdoorConcentration}
+          onOutdoorConcentrationChange={setOutdoorConcentration}
+          airExchangeACH={airExchangeACH}
+          onAirExchangeACHChange={setAirExchangeACH}
+          activeSources={activeSources}
+          onToggleSource={toggleSource}
+          massBalanceResult={massBalanceResult}
+        />
 
       </div>
 
       {/* Secondary Row: DIY Corsi-Rosenthal Box-Fan & Houseplant Myth Correction */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* DIY Box Fan Configuration */}
-        <div className="glass-panel rounded-2xl p-6 border border-white/10 space-y-3">
-          <div className="flex items-center space-x-2 text-teal-400 font-bold text-sm">
-            <Cpu className="w-4 h-4" />
-            <span>DIY Box-Fan Filter Assistant (Corsi-Rosenthal Architecture)</span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            If commercial HEPA purifiers are cost-prohibitive during winter emergencies, an effective DIY box-fan with a MERV-13 filter achieves high throughput:
-          </p>
-          <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-midnight-950 border border-white/10 font-mono text-xs">
-            <div>
-              <span className="text-slate-500 block text-[10px]">ESTIMATED CADR</span>
-              <span className="text-teal-300 font-bold text-base">{diyFilter.estimatedCADRM3H} m³/h</span>
-            </div>
-            <div>
-              <span className="text-slate-500 block text-[10px]">FILTER EFFICIENCY</span>
-              <span className="text-white font-bold text-base">{(diyFilter.singlePassEfficiency * 100).toFixed(0)}%</span>
-            </div>
-            <div>
-              <span className="text-slate-500 block text-[10px]">APPROX COST</span>
-              <span className="text-white font-bold text-base">${diyFilter.estimatedCostUSD}</span>
-            </div>
-          </div>
-          <p className="text-[11px] text-slate-400">{diyFilter.maintenanceNote}</p>
-        </div>
-
-        {/* Houseplant Myth Card */}
-        <div className="glass-panel rounded-2xl p-6 border border-white/10 space-y-3 bg-midnight-900/40">
-          <div className="flex items-center space-x-2 text-amber-400 font-bold text-sm">
-            <AlertTriangle className="w-4 h-4" />
-            <span>{HOUSEPLANT_MYTH_GUIDANCE.summary}</span>
-          </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            {HOUSEPLANT_MYTH_GUIDANCE.scientificBasis}
-          </p>
-          <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-800/40 text-xs text-amber-200">
-            <strong>Evidence-Based Rule: </strong>
-            <span>{HOUSEPLANT_MYTH_GUIDANCE.recommendation}</span>
-          </div>
-        </div>
-
-      </div>
+      <IndoorGuidanceCards diyFilter={diyFilter} />
 
     </div>
   );

@@ -5,6 +5,14 @@ import {
 } from 'lucide-react';
 import { CommunityStore } from '../../domain/community/community-store';
 import { CommunityActionPledge } from '../../domain/community/types';
+import { downloadJsonFile } from '../../lib/downloadJson';
+
+function exportCommunityPledges(): void {
+  downloadJsonFile(
+    `vayusensex_community_pledges_${new Date().toISOString().slice(0, 10)}.json`,
+    CommunityStore.exportPledgesJSON()
+  );
+}
 
 interface CommunityHubProps {
   currentCity?: string;
@@ -38,16 +46,6 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ currentCity = 'Local
     notify('Day logged! Collective neighborhood savings updated');
   };
 
-  const handleExport = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(CommunityStore.exportPledgesJSON());
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `vayusensex_community_pledges_${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
@@ -67,7 +65,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ currentCity = 'Local
           </div>
 
           <button
-            onClick={handleExport}
+            onClick={exportCommunityPledges}
             className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-midnight-800 hover:bg-midnight-700 border border-white/10 text-xs font-medium text-slate-200 transition-colors shrink-0"
           >
             <Download className="w-3.5 h-3.5 text-cyan-400" />
@@ -113,7 +111,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ currentCity = 'Local
         </div>
 
         {notification && (
-          <div className="mt-4 p-2.5 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs flex items-center space-x-2 animate-fade-in">
+          <div role="status" aria-live="polite" className="mt-4 p-2.5 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-300 text-xs flex items-center space-x-2 animate-fade-in">
             <Check className="w-4 h-4 text-teal-400 shrink-0" />
             <span>{notification}</span>
           </div>

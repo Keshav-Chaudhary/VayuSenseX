@@ -59,20 +59,19 @@ export function createRateLimiter(maxRequests = 30, windowMs = 60 * 1000) {
  * Strict Security Headers Middleware (Helmet-equivalent standard).
  */
 export function securityHeadersMiddleware(req: Request, res: Response, next: NextFunction): void {
-  // Content Security Policy (strict defaults)
+  // Content Security Policy (strict defaults aligned with Firebase Hosting)
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://api.open-meteo.com https://nominatim.openstreetmap.org https://generativelanguage.googleapis.com;"
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.open-meteo.com https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://nominatim.openstreetmap.org https://generativelanguage.googleapis.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
   );
-  // Defend against MIME sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  // Defend against clickjacking
   res.setHeader('X-Frame-Options', 'DENY');
-  // Defend against cross-site scripting in legacy browsers
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  // Referrer Policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+
   // Strict Transport Security (HSTS) - enabled strictly in production HTTPS environments
   const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
   if (process.env.NODE_ENV === 'production' && isHttps) {
@@ -83,13 +82,20 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
 
 /**
  * Safe global error sanitizer middleware (CWE-209 mitigation).
- * Logs exception stack trace server-side and returns generic error response to client.
+ * Maps malformed JSON syntax errors cleanly to HTTP 400 and hides stack traces on 500.
  */
-export function safeErrorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
-  // Server-side logging without exposing secrets
+export function safeErrorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
   console.error('[VayuSenseX Gateway Error]:', err.message);
 
   if (res.headersSent) {
+    return;
+  }
+
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({
+      error: 'Malformed JSON',
+      message: 'Request body must contain valid JSON.',
+    });
     return;
   }
 

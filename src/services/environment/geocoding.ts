@@ -1,4 +1,17 @@
+import { z } from 'zod';
 import { LocationSearchResult } from './types';
+
+const NominatimResultSchema = z.object({
+  osm_id: z.union([z.number(), z.string()]).optional(),
+  name: z.string().optional(),
+  display_name: z.string(),
+  lat: z.string(),
+  lon: z.string(),
+  address: z.object({
+    country: z.string().optional(),
+    state: z.string().optional(),
+  }).optional(),
+});
 
 /**
  * Pre-calibrated high-relevance urban centers for instant zero-latency demonstration.
@@ -101,14 +114,15 @@ export async function searchLocations(query: string): Promise<LocationSearchResu
       return matchingPresets.length > 0 ? matchingPresets : PRESET_URBAN_LOCATIONS.slice(0, 3);
     }
 
-    const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) {
-      const results: LocationSearchResult[] = data.map((item: any, idx: number) => ({
-        id: `osm-${item.osm_id || idx}`,
-        name: item.name || item.display_name.split(',')[0],
+    const rawData: unknown = await res.json();
+    const parsedArray = z.array(NominatimResultSchema).safeParse(rawData);
+    if (parsedArray.success && parsedArray.data.length > 0) {
+      const results: LocationSearchResult[] = parsedArray.data.map((item, idx) => ({
+        id: `osm-${item.osm_id ?? idx}`,
+        name: item.name || item.display_name.split(',')[0] || 'Unknown',
         label: item.display_name,
-        latitude: parseFloat(item.lat),
-        longitude: parseFloat(item.lon),
+        latitude: Number.parseFloat(item.lat),
+        longitude: Number.parseFloat(item.lon),
         country: item.address?.country || '',
         state: item.address?.state,
       }));

@@ -1,0 +1,18 @@
+repos:
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: Oxlint Static Analysis
+        entry: npm run lint
+        language: system
+        pass_filenames: false
+      - id: typecheck
+        name: Strict TypeScript Check
+        entry: npm run typecheck
+        language: system
+        pass_filenames: false
+      - id: repo-size
+        name: Repository Size Audit (< 10 MB)
+        entry: npm run check-size
+        language: system
+        pass_filenames: false

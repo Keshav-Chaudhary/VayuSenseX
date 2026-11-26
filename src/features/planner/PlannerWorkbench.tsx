@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  CalendarCheck, ShieldAlert, ArrowRight, CheckCircle2, 
-  Clock, TrendingDown, Info, Sparkles, Filter 
+  CalendarCheck, ShieldAlert, TrendingDown, Sparkles, Filter, Clock 
 } from 'lucide-react';
 import { HouseholdProfile } from '../../domain/household/types';
 import { HourlyForecastPoint } from '../../services/environment/types';
 import { generateDailyHouseholdPlan } from '../../domain/planner/schedule-optimizer';
 import { ActionRecommendation, ActionStatus } from '../../domain/planner/planner-types';
+import { RecommendationCard } from './RecommendationCard';
+import { ScheduleTimelinePanel } from './ScheduleTimelinePanel';
 
 interface PlannerWorkbenchProps {
   profile: HouseholdProfile;
@@ -195,222 +196,21 @@ export const PlannerWorkbench: React.FC<PlannerWorkbenchProps> = ({
           </div>
 
           <div className="space-y-4">
-            {filteredRecommendations.map((rec: ActionRecommendation) => {
-              const currentStatus = actionStatuses[rec.id] ?? rec.status;
-              const isExpanded = expandedRationale === rec.id;
-
-              return (
-                <div
-                  key={rec.id}
-                  className={`glass-card p-5 rounded-2xl border transition-all ${
-                    currentStatus === 'COMPLETED'
-                      ? 'border-teal-500/30 bg-teal-950/20'
-                      : currentStatus === 'SKIPPED'
-                      ? 'border-white/5 bg-midnight-950/40 opacity-60'
-                      : 'border-white/10 bg-midnight-900/60 hover:border-cyan-500/30'
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${
-                          rec.priority === 'HIGH'
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : rec.priority === 'MEDIUM'
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                        }`}>
-                          {rec.priority}
-                        </span>
-
-                        <span className="text-[11px] font-mono text-slate-400">
-                          {rec.category.replace(/_/g, ' ')}
-                        </span>
-
-                        {rec.originalTimeLabel && rec.suggestedTimeLabel && (
-                          <span className="text-[11px] text-cyan-300 font-mono">
-                            • {rec.originalTimeLabel} → {rec.suggestedTimeLabel}
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="text-base font-bold text-white">
-                        {rec.title}
-                      </h3>
-
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {rec.actionText}
-                      </p>
-
-                      {/* Quantitative Impact Metric */}
-                      <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-lg bg-midnight-950/80 border border-white/5 text-xs">
-                        <span className="text-slate-400">Estimated Dose Reduction:</span>
-                        <span className="font-mono font-bold text-teal-400">
-                          {rec.estimatedDoseReductionUg.toFixed(1)} µg PM2.5
-                        </span>
-                        {rec.estimatedCO2eReductionGrams !== undefined && rec.estimatedCO2eReductionGrams > 0 && (
-                          <span className="font-mono text-emerald-400 text-[11px]">
-                            • {rec.estimatedCO2eReductionGrams}g CO2e saved
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Interactive Status Controls */}
-                    <div className="flex sm:flex-col items-end gap-2 shrink-0">
-                      <div className="flex items-center space-x-1 bg-midnight-950 rounded-lg p-1 border border-white/10 text-xs">
-                        <button
-                          onClick={() => handleStatusChange(rec.id, 'PLANNED')}
-                          className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                            currentStatus === 'PLANNED'
-                              ? 'bg-cyan-500 text-midnight-950 font-bold'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Planned
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(rec.id, 'COMPLETED')}
-                          className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                            currentStatus === 'COMPLETED'
-                              ? 'bg-teal-500 text-midnight-950 font-bold'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Done
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(rec.id, 'SKIPPED')}
-                          className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                            currentStatus === 'SKIPPED'
-                              ? 'bg-slate-700 text-white font-bold'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Skip
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => setExpandedRationale(isExpanded ? null : rec.id)}
-                        className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center space-x-1 mt-1"
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                        <span>{isExpanded ? 'Hide Science' : 'Scientific Rationale'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Scientific Rationale Accordion */}
-                  {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-white/10 bg-midnight-950/60 p-3.5 rounded-xl text-xs space-y-2 animate-fade-in">
-                      <div className="flex items-center space-x-1.5 text-cyan-300 font-bold">
-                        <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Atmospheric & Physiological Rationale:</span>
-                      </div>
-                      <p className="text-slate-300 text-[11px] leading-relaxed">
-                        {rec.rationale}
-                      </p>
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        Citing Fact IDs: {rec.supportingFactIds.join(', ')}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {filteredRecommendations.map((rec: ActionRecommendation) => (
+              <RecommendationCard
+                key={rec.id}
+                rec={rec}
+                currentStatus={actionStatuses[rec.id] ?? rec.status}
+                isExpanded={expandedRationale === rec.id}
+                onStatusChange={handleStatusChange}
+                onToggleExpand={() => setExpandedRationale(expandedRationale === rec.id ? null : rec.id)}
+              />
+            ))}
           </div>
         </div>
 
         {/* Right 1 Col: Optimized Hourly Timeline */}
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-teal-400" />
-              <span>Optimized Daily Routine</span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              Shifted away from nocturnal thermal inversions
-            </p>
-          </div>
-
-          <div className="glass-panel p-5 rounded-2xl border border-white/10 bg-midnight-900/60 space-y-3">
-            {plan.scheduleItems.map((slot) => (
-              <div
-                key={slot.activityId}
-                className={`p-3.5 rounded-xl border text-xs transition-all ${
-                  slot.isModified
-                    ? 'border-cyan-500/40 bg-cyan-950/20'
-                    : 'border-white/5 bg-midnight-950/60'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-white text-sm">{slot.label}</span>
-                  {slot.isModified ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                      Rescheduled
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-500">Unchanged</span>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2 mt-2">
-                  <span className="font-mono text-slate-400">
-                    {String(slot.originalStartHour).padStart(2, '0')}:{String(slot.originalStartMinute).padStart(2, '0')}
-                  </span>
-                  {slot.isModified && (
-                    <>
-                      <ArrowRight className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                      <span className="font-mono font-bold text-cyan-300">
-                        {String(slot.suggestedStartHour).padStart(2, '0')}:{String(slot.suggestedStartMinute).padStart(2, '0')}
-                      </span>
-                    </>
-                  )}
-                  <span className="text-slate-500 font-mono">({slot.durationMinutes} min)</span>
-                </div>
-
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-[11px]">
-                  <span className="text-slate-400">
-                    Inhaled Dose:
-                  </span>
-                  <div className="flex items-center space-x-1.5">
-                    {slot.isModified && (
-                      <span className="line-through text-rose-400/80 font-mono">
-                        {slot.estimatedDoseBeforeUg.toFixed(1)}
-                      </span>
-                    )}
-                    <span className="font-mono font-bold text-teal-300">
-                      {slot.estimatedDoseAfterUg.toFixed(1)} µg
-                    </span>
-                    {slot.doseReductionPercent > 0 && (
-                      <span className="text-teal-400 font-bold">
-                        (-{slot.doseReductionPercent.toFixed(0)}%)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {slot.modificationReason && (
-                  <p className="text-[10px] text-cyan-300/80 mt-1.5 leading-snug">
-                    {slot.modificationReason}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Quick Tip Card */}
-          <div className="p-4 rounded-xl bg-teal-950/30 border border-teal-500/20 text-xs space-y-2">
-            <div className="flex items-center space-x-2 text-teal-300 font-bold">
-              <CheckCircle2 className="w-4 h-4 text-teal-400" />
-              <span>Smart Shift Rule of Thumb</span>
-            </div>
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              Shifting outdoor activities between 12:00 PM and 3:30 PM harnesses midday solar convection, when the planetary boundary layer expands and disperses surface particulates by up to 55%.
-            </p>
-          </div>
-        </div>
+        <ScheduleTimelinePanel scheduleItems={plan.scheduleItems} />
 
       </div>
     </div>

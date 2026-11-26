@@ -46,6 +46,7 @@ export const ExposureWorkbench: React.FC<ExposureWorkbenchProps> = ({ currentOut
             {(['ADULT', 'CHILD', 'ELDERLY', 'PREGNANT', 'RESPIRATORY_SENSITIVE'] as DemographyGroup[]).map((grp) => (
               <button
                 key={grp}
+                aria-pressed={demographic === grp}
                 onClick={() => setDemographic(grp)}
                 className={`px-3 py-1.5 rounded-xl border font-medium transition-all ${
                   demographic === grp
@@ -65,6 +66,7 @@ export const ExposureWorkbench: React.FC<ExposureWorkbenchProps> = ({ currentOut
           </label>
           <div className="flex items-center bg-midnight-900 p-1 rounded-xl border border-white/10 text-xs">
             <button
+              aria-pressed={activePreset === 'BASELINE'}
               onClick={() => setActivePreset('BASELINE')}
               className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 activePreset === 'BASELINE'
@@ -75,6 +77,7 @@ export const ExposureWorkbench: React.FC<ExposureWorkbenchProps> = ({ currentOut
               Unmitigated Routine
             </button>
             <button
+              aria-pressed={activePreset === 'OPTIMIZED'}
               onClick={() => setActivePreset('OPTIMIZED')}
               className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 activePreset === 'OPTIMIZED'

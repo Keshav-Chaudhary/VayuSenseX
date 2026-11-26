@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Bike, Compass, ShieldCheck, ArrowRight, Clock, 
-  TrendingDown, CheckCircle2, Layers 
+  Bike, Compass, ShieldCheck, Layers 
 } from 'lucide-react';
 import { evaluateCleanCorridorRoutes, URBAN_NODES } from '../../domain/mobility';
 import { compareTransportEmissions, TransportMode } from '../../domain/sustainability';
+import { RouteEvaluationCard } from './RouteEvaluationCard';
+import { LifecycleComparisonTab } from './LifecycleComparisonTab';
 
 interface MobilityWorkbenchProps {
   currentOutdoorPm25?: number;
@@ -164,7 +165,7 @@ export const MobilityWorkbench: React.FC<MobilityWorkbenchProps> = ({
                 <label className="block text-slate-300 font-medium mb-1">Optimization Strategy</label>
                 <select
                   value={optimizationGoal}
-                  onChange={(e) => setOptimizationGoal(e.target.value as any)}
+                  onChange={(e) => setOptimizationGoal(e.target.value as 'LOWEST_EXPOSURE' | 'SHORTEST_TIME' | 'BALANCED')}
                   className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
                 >
                   <option value="LOWEST_EXPOSURE">Lowest Inhaled Particulate Dose</option>
@@ -199,82 +200,7 @@ export const MobilityWorkbench: React.FC<MobilityWorkbenchProps> = ({
 
               <div className="space-y-4">
                 {routeEvaluations.map(route => (
-                  <div
-                    key={route.id}
-                    className={`glass-card p-5 rounded-2xl border transition-all ${
-                      route.isLowestExposure
-                        ? 'border-teal-500/40 bg-teal-950/20 shadow-glow-cyan/5'
-                        : 'border-white/10 bg-midnight-900/60'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-base font-bold text-white">{route.title}</span>
-                          {route.isLowestExposure && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                              ★ Cleanest Route
-                            </span>
-                          )}
-                          {route.isFastest && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                              Fastest
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-400 leading-snug">{route.scientificNotes}</p>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <span className="text-xl font-bold font-mono text-teal-300 block">
-                          {route.totalInhaledDoseUg} µg
-                        </span>
-                        <span className="text-[10px] text-slate-400">Total Inhaled Dose</span>
-                      </div>
-                    </div>
-
-                    {/* Metric Badges */}
-                    <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/5 text-xs">
-                      <div className="p-2.5 rounded-lg bg-midnight-950/60 border border-white/5">
-                        <span className="text-[10px] text-slate-500 block">Travel Duration</span>
-                        <div className="flex items-center space-x-1.5 mt-0.5">
-                          <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                          <span className="font-mono font-bold text-white">{route.totalDurationMinutes} min</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-midnight-950/60 border border-white/5">
-                        <span className="text-[10px] text-slate-500 block">Corridor Distance</span>
-                        <span className="font-mono font-bold text-white block mt-0.5">{route.totalDistanceKm} km</span>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-midnight-950/60 border border-white/5">
-                        <span className="text-[10px] text-slate-500 block">Lifecycle CO2e</span>
-                        <span className="font-mono font-bold text-emerald-300 block mt-0.5">
-                          {route.totalLifecycleCO2eGrams > 1000 
-                            ? `${(route.totalLifecycleCO2eGrams / 1000).toFixed(2)} kg` 
-                            : `${route.totalLifecycleCO2eGrams} g`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Segments Breakdown */}
-                    <div className="mt-3 space-y-1.5 text-[11px]">
-                      <span className="text-slate-500 font-semibold block text-[10px]">Segment Corridor Steps:</span>
-                      {route.segments.map((seg, i) => (
-                        <div key={i} className="flex items-center justify-between p-2 rounded bg-midnight-950/40 text-slate-300">
-                          <div className="flex items-center space-x-2 truncate">
-                            <span className="font-mono text-slate-500">{i + 1}.</span>
-                            <span>{seg.fromNodeName}</span>
-                            <ArrowRight className="w-3 h-3 text-slate-500 shrink-0" />
-                            <span>{seg.toNodeName}</span>
-                            <span className="text-[10px] text-cyan-400 font-mono">({seg.corridorType.replace(/_/g, ' ')})</span>
-                          </div>
-                          <span className="font-mono text-slate-400 shrink-0 ml-2">{seg.durationMinutes}m • {seg.inhaledDoseUg}µg</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <RouteEvaluationCard key={route.id} route={route} />
                 ))}
               </div>
             </div>
@@ -284,111 +210,17 @@ export const MobilityWorkbench: React.FC<MobilityWorkbenchProps> = ({
 
       {/* Tab 2: Well-to-Wheel Lifecycle Emissions */}
       {activeTab === 'lifecycle' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-5 glass-panel rounded-2xl p-6 border border-white/10 space-y-5 text-xs">
-            <h3 className="text-base font-bold text-white pb-3 border-b border-white/10">
-              Commute Parameters
-            </h3>
-
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-slate-300 font-medium">One-Way Commute Distance:</span>
-                <span className="font-mono text-cyan-400 font-bold">{distanceKm} km</span>
-              </div>
-              <input
-                type="range"
-                min="2"
-                max="60"
-                value={distanceKm}
-                onChange={(e) => setDistanceKm(Number(e.target.value))}
-                className="w-full accent-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-300 font-medium mb-1">Current Baseline Mode</label>
-              <select
-                value={currentMode}
-                onChange={(e) => setCurrentMode(e.target.value as TransportMode)}
-                className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
-              >
-                <option value="PETROL_CAR">Petrol Car (Solo)</option>
-                <option value="DIESEL_CAR">Diesel Car (Solo)</option>
-                <option value="MOTORCYCLE">Motorcycle / Scooter</option>
-                <option value="BUS">City Diesel Bus</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-slate-300 font-medium mb-1">Alternative Sustainable Mode</label>
-              <select
-                value={alternativeMode}
-                onChange={(e) => setAlternativeMode(e.target.value as TransportMode)}
-                className="w-full px-3 py-2 rounded-lg bg-midnight-950 border border-white/10 text-white"
-              >
-                <option value="METRO_RAIL">Rapid Metro Rail</option>
-                <option value="EV_CAR">Electric Vehicle (Grid Charged)</option>
-                <option value="CARPOOL">Carpool (Shared)</option>
-                <option value="CYCLING">Bicycle</option>
-                <option value="WALKING">Walking</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-slate-300 font-medium">Weekly Travel Days:</span>
-                <span className="font-mono text-cyan-400 font-bold">{daysPerWeek} days/week</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="7"
-                value={daysPerWeek}
-                onChange={(e) => setDaysPerWeek(Number(e.target.value))}
-                className="w-full accent-cyan-400"
-              />
-            </div>
-          </div>
-
-          <div className="lg:col-span-7 glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
-            <h3 className="text-base font-bold text-white flex items-center space-x-2">
-              <TrendingDown className="w-4 h-4 text-teal-400" />
-              <span>Calculated Emission Savings</span>
-            </h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-midnight-900/60 border border-white/5">
-                <span className="text-xs text-slate-400 block">Daily CO2e Avoided</span>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-2xl font-bold font-mono text-teal-300">
-                    {(emissionsComparison.savingsGramsCO2ePerTrip * 2 / 1000).toFixed(2)}
-                  </span>
-                  <span className="text-xs text-slate-400">kg CO2e</span>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-midnight-900/60 border border-white/5">
-                <span className="text-xs text-slate-400 block">Annual Cumulative Offset</span>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-2xl font-bold font-mono text-emerald-300">
-                    {emissionsComparison.savingsKgCO2ePerYear}
-                  </span>
-                  <span className="text-xs text-slate-400">kg CO2e/year</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-teal-950/20 border border-teal-500/20 text-xs text-slate-300 space-y-2">
-              <div className="flex items-center space-x-1.5 text-teal-300 font-bold">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Equivalent Real-World Environmental Impact:</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-slate-400">
-                Switching {distanceKm} km daily from {currentMode.replace(/_/g, ' ')} to {alternativeMode.replace(/_/g, ' ')} avoids approximately <strong className="text-white">{emissionsComparison.savingsKgCO2ePerYear} kg of greenhouse gases</strong> annually — equivalent to sequestering the carbon of <strong className="text-teal-300">{emissionsComparison.equivalentTreesPlanted} urban trees</strong>.
-              </p>
-            </div>
-          </div>
-        </div>
+        <LifecycleComparisonTab
+          distanceKm={distanceKm}
+          onDistanceChange={setDistanceKm}
+          currentMode={currentMode}
+          onCurrentModeChange={setCurrentMode}
+          alternativeMode={alternativeMode}
+          onAlternativeModeChange={setAlternativeMode}
+          daysPerWeek={daysPerWeek}
+          onDaysPerWeekChange={setDaysPerWeek}
+          emissionsComparison={emissionsComparison}
+        />
       )}
     </div>
   );

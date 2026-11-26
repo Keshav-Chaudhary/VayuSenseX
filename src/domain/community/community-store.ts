@@ -53,8 +53,8 @@ export const DEFAULT_COMMUNITY_PLEDGES: CommunityActionPledge[] = [
   },
 ];
 
-export class CommunityStore {
-  static getPledges(): CommunityActionPledge[] {
+export const CommunityStore = {
+  getPledges(): CommunityActionPledge[] {
     try {
       let raw: string | null = null;
       if (typeof localStorage !== 'undefined') {
@@ -73,9 +73,9 @@ export class CommunityStore {
       // Storage unavailable
     }
     return JSON.parse(JSON.stringify(DEFAULT_COMMUNITY_PLEDGES));
-  }
+  },
 
-  static savePledges(pledges: CommunityActionPledge[]): void {
+  savePledges(pledges: CommunityActionPledge[]): void {
     try {
       const serialized = JSON.stringify(pledges);
       if (typeof localStorage !== 'undefined') {
@@ -86,9 +86,9 @@ export class CommunityStore {
     } catch (err) {
       console.warn('Failed to persist community pledges:', err);
     }
-  }
+  },
 
-  static togglePledge(pledgeId: string): CommunityActionPledge[] {
+  togglePledge(pledgeId: string): CommunityActionPledge[] {
     const pledges = this.getPledges();
     const pledge = pledges.find(p => p.id === pledgeId);
     if (pledge) {
@@ -97,9 +97,9 @@ export class CommunityStore {
       this.savePledges(pledges);
     }
     return pledges;
-  }
+  },
 
-  static incrementCompletion(pledgeId: string): CommunityActionPledge[] {
+  incrementCompletion(pledgeId: string): CommunityActionPledge[] {
     const pledges = this.getPledges();
     const pledge = pledges.find(p => p.id === pledgeId);
     if (pledge && pledge.isPledged) {
@@ -107,13 +107,13 @@ export class CommunityStore {
       this.savePledges(pledges);
     }
     return pledges;
-  }
+  },
 
   /**
    * Computes aggregate neighborhood savings from verified local-first pledges.
    * Zero PII or addresses are broadcast to remote servers.
    */
-  static getAggregatedStats(neighborhoodZone = 'Anand Vihar Sector 4 Community'): CommunityAggregatedStats {
+  getAggregatedStats(neighborhoodZone = 'Anand Vihar Sector 4 Community'): CommunityAggregatedStats {
     const pledges = this.getPledges();
     const activePledges = pledges.filter(p => p.isPledged);
 
@@ -135,9 +135,9 @@ export class CommunityStore {
       provenance: 'CALCULATED_LOCAL',
       privacyGuarantee: '100% Local-First. Zero household addresses or identity data are transmitted to cloud databases.',
     };
-  }
+  },
 
-  static exportPledgesJSON(): string {
+  exportPledgesJSON(): string {
     return JSON.stringify(this.getPledges(), null, 2);
-  }
-}
+  },
+};

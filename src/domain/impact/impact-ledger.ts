@@ -23,11 +23,24 @@ export function createDeduplicationHash(actionId: string, date: string, memberId
   return `hash-${Math.abs(hash).toString(16)}`;
 }
 
-export class ImpactLedgerStore {
+function saveEntries(entries: ImpactLedgerEntry[]): void {
+  try {
+    const serialized = JSON.stringify(entries);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, serialized);
+    } else {
+      inMemoryStore.set(STORAGE_KEY, serialized);
+    }
+  } catch (err) {
+    console.warn('Failed to persist impact ledger:', err);
+  }
+}
+
+export const ImpactLedgerStore = {
   /**
    * Retrieves all ledger entries sorted chronologically descending.
    */
-  static getEntries(): ImpactLedgerEntry[] {
+  getEntries(): ImpactLedgerEntry[] {
     try {
       let raw: string | null = null;
       if (typeof localStorage !== 'undefined') {
@@ -46,31 +59,12 @@ export class ImpactLedgerStore {
       // Storage unavailable or corrupted JSON
     }
     return [];
-  }
-
-  /**
-   * Saves entries into persistent storage.
-   */
-  private static saveEntries(entries: ImpactLedgerEntry[]): void {
-    try {
-      const serialized = JSON.stringify(entries);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, serialized);
-      } else {
-        inMemoryStore.set(STORAGE_KEY, serialized);
-      }
-    } catch (err) {
-      console.warn('Failed to persist impact ledger:', err);
-    }
-  }
+  },
 
   /**
    * Logs an action into the ledger with strict deduplication.
-   * If an action with the same deduplicationHash already exists:
-   * - Prevents duplicate insertion.
-   * - Updates status if advancing (e.g. SUGGESTED -> PLANNED -> COMPLETED).
    */
-  static recordAction(entryData: Omit<ImpactLedgerEntry, 'id' | 'deduplicationHash'>): ImpactLedgerEntry {
+  recordAction(entryData: Omit<ImpactLedgerEntry, 'id' | 'deduplicationHash'>): ImpactLedgerEntry {
     const deduplicationHash = createDeduplicationHash(
       entryData.actionId,
       entryData.date,
@@ -82,7 +76,6 @@ export class ImpactLedgerStore {
 
     if (existingIndex >= 0) {
       const existing = entries[existingIndex]!;
-      // Update state without duplicating
       const updated: ImpactLedgerEntry = {
         ...existing,
         ...entryData,
@@ -91,7 +84,7 @@ export class ImpactLedgerStore {
         plannedAt: entryData.status === 'PLANNED' || entryData.status === 'COMPLETED' ? (existing.plannedAt || new Date().toISOString()) : existing.plannedAt,
       };
       entries[existingIndex] = updated;
-      this.saveEntries(entries);
+      saveEntries(entries);
       return updated;
     }
 
@@ -106,14 +99,14 @@ export class ImpactLedgerStore {
     };
 
     entries.unshift(newEntry);
-    this.saveEntries(entries);
+    saveEntries(entries);
     return newEntry;
-  }
+  },
 
   /**
    * Transitions an existing action status (e.g., PLANNED -> COMPLETED).
    */
-  static updateActionStatus(deduplicationHash: string, newStatus: ActionLifecycleStatus): ImpactLedgerEntry | null {
+  updateActionStatus(deduplicationHash: string, newStatus: ActionLifecycleStatus): ImpactLedgerEntry | null {
     const entries = this.getEntries();
     const index = entries.findIndex(e => e.deduplicationHash === deduplicationHash);
     if (index === -1) return null;
@@ -127,15 +120,14 @@ export class ImpactLedgerStore {
     };
 
     entries[index] = updated;
-    this.saveEntries(entries);
+    saveEntries(entries);
     return updated;
-  }
+  },
 
   /**
    * Computes mathematical summary distinguishing Realized (Completed) from Projected (Planned) impact.
-   * GUARANTEE: Suggested or Planned actions NEVER count toward realized savings.
    */
-  static getSummary(startDate?: string, endDate?: string): LedgerSummary {
+  getSummary(startDate?: string, endDate?: string): LedgerSummary {
     const entries = this.getEntries().filter(e => {
       if (startDate && e.date < startDate) return false;
       if (endDate && e.date > endDate) return false;
@@ -198,17 +190,16 @@ export class ImpactLedgerStore {
       categoryBreakdown,
       auditTimestamp: new Date().toISOString(),
     };
-  }
+  },
 
-  static exportLedgerJSON(): string {
+  exportLedgerJSON(): string {
     return JSON.stringify(this.getEntries(), null, 2);
-  }
+  },
 
   /**
    * Imports external ledger records with strict deduplication hash enforcement.
-   * Guarantees duplicate JSON imports cannot artificially inflate environmental savings.
    */
-  static importLedgerJSON(jsonStr: string): { importedCount: number; duplicateCount: number } {
+  importLedgerJSON(jsonStr: string): { importedCount: number; duplicateCount: number } {
     try {
       const parsed = JSON.parse(jsonStr);
       if (!Array.isArray(parsed)) return { importedCount: 0, duplicateCount: 0 };
@@ -225,7 +216,7 @@ export class ImpactLedgerStore {
 
         if (existingHashes.has(dedupHash)) {
           duplicateCount++;
-          continue; // Strict deduplication: reject repeat imports from inflating totals
+          continue;
         }
 
         existingEntries.push({
@@ -236,18 +227,18 @@ export class ImpactLedgerStore {
         importedCount++;
       }
 
-      this.saveEntries(existingEntries);
+      saveEntries(existingEntries);
       return { importedCount, duplicateCount };
     } catch {
       return { importedCount: 0, duplicateCount: 0 };
     }
-  }
+  },
 
-  static clearLedger(): void {
+  clearLedger(): void {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
     } else {
       inMemoryStore.delete(STORAGE_KEY);
     }
-  }
-}
+  },
+};

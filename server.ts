@@ -42,9 +42,12 @@ import {
   BriefingRequestSchema, 
   AssistRequestSchema 
 } from './server/schemas';
-import { GroundedAIResponse } from './src/services/ai/types';
+import { GroundedAIResponse, FactRegistry } from './src/services/ai/types';
+import { EnvironmentalSnapshot } from './src/domain/types';
+import { DailyHouseholdPlan } from './src/domain/planner/planner-types';
 
 export const app = express();
+app.disable('x-powered-by');
 const PORT = process.env.PORT || 3001;
 
 // Trust reverse proxies (Render, Vercel, Nginx, Cloudflare) for accurate client IP resolution
@@ -54,13 +57,13 @@ app.set('trust proxy', 1);
 app.use(securityHeadersMiddleware);
 
 // 2. Strict CORS allowlist
-const corsOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',') 
+const corsOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
   : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || corsOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    if (!origin || corsOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Blocked by CORS policy'));
@@ -69,6 +72,14 @@ app.use(cors({
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+const wrapAsync = (
+  fn: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>
+): express.RequestHandler => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
 
 // 3. 15 KB Request body limit to prevent denial of service (DoS)
 app.use(express.json({ limit: '15kb' }));
@@ -85,7 +96,7 @@ export const aiResponseCache = new Sha256LruCache<GroundedAIResponse>(100, 15 * 
 /**
  * Health check & telemetry status
  */
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', wrapAsync(async (req, res) => {
   const probe = req.query.probe === 'true';
   const gemini = await checkGeminiHealth(probe);
   res.status(200).json({
@@ -95,31 +106,74 @@ app.get('/api/health', async (req, res) => {
     gemini,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 /**
  * Server-side grounded daily briefing
  */
-app.post('/api/briefing', async (req, res, next) => {
-  try {
-    const parseResult = BriefingRequestSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      res.status(400).json({
-        error: 'Invalid Request Payload',
-        details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
-      });
-      return;
-    }
+app.post('/api/briefing', wrapAsync(async (req, res) => {
+  const parseResult = BriefingRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({
+      error: 'Invalid Request Payload',
+      details: parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+    });
+    return;
+  }
 
-    const { snapshot, plan, registry, standard } = parseResult.data;
+  const { snapshot, plan, registry, standard } = parseResult.data;
 
-    // SHA-256 Cache Check (Full 64-char hex digest)
+  const cacheKey = aiResponseCache.hashKey({
+    city: snapshot.location?.city,
+    pm25: snapshot.pollutants?.pm25,
+    cleanest: plan.cleanestAvailablePeriod,
+    peak: plan.peakPollutionPeriod,
+    standard: standard || 'CPCB',
+  });
+
+  const cached = aiResponseCache.get(cacheKey);
+  if (cached) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.status(200).json(cached);
+    return;
+  }
+
+  const response = await executeServerGroundedBriefing(
+    snapshot as unknown as EnvironmentalSnapshot,
+    plan as unknown as DailyHouseholdPlan,
+    registry as unknown as FactRegistry,
+    standard || 'CPCB'
+  );
+  aiResponseCache.set(cacheKey, response);
+
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.status(200).json(response);
+}));
+
+/**
+ * Server-side grounded Q&A assistant
+ */
+app.post('/api/assist', wrapAsync(async (req, res) => {
+  const parseResult = AssistRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({
+      error: 'Invalid Request Payload',
+      details: parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+    });
+    return;
+  }
+
+  const { question, snapshot, plan, registry, history } = parseResult.data;
+  const isMultiTurn = Array.isArray(history) && history.length > 0;
+  const typedSnap = snapshot as unknown as EnvironmentalSnapshot;
+  const typedPlan = plan as unknown as DailyHouseholdPlan;
+  const typedReg = registry as unknown as FactRegistry;
+
+  if (!isMultiTurn) {
     const cacheKey = aiResponseCache.hashKey({
-      city: snapshot.location?.city,
+      q: question.trim().toLowerCase(),
       pm25: snapshot.pollutants?.pm25,
-      cleanest: plan.cleanestAvailablePeriod,
-      peak: plan.peakPollutionPeriod,
-      standard: standard || 'CPCB',
+      city: snapshot.location?.city,
     });
 
     const cached = aiResponseCache.get(cacheKey);
@@ -129,61 +183,24 @@ app.post('/api/briefing', async (req, res, next) => {
       return;
     }
 
-    const response = await executeServerGroundedBriefing(snapshot as any, plan as any, registry as any, standard || 'CPCB');
+    const response = await executeServerGroundedAnswer(question, typedSnap, typedPlan, typedReg, []);
     aiResponseCache.set(cacheKey, response);
 
     res.setHeader('X-Cache-Status', 'MISS');
     res.status(200).json(response);
-  } catch (err) {
-    next(err);
+    return;
   }
-});
 
-/**
- * Server-side grounded Q&A assistant
- */
-app.post('/api/assist', async (req, res, next) => {
-  try {
-    const parseResult = AssistRequestSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      res.status(400).json({
-        error: 'Invalid Request Payload',
-        details: parseResult.error.issues.map(i => `${i.path.join('.')}: ${i.message}`),
-      });
-      return;
-    }
+  const response = await executeServerGroundedAnswer(question, typedSnap, typedPlan, typedReg, history);
+  res.setHeader('X-Cache-Status', 'BYPASS');
+  res.status(200).json(response);
+}));
 
-    const { question, snapshot, plan, registry, history } = parseResult.data;
-    const isMultiTurn = Array.isArray(history) && history.length > 0;
-
-    if (!isMultiTurn) {
-      const cacheKey = aiResponseCache.hashKey({
-        q: question.trim().toLowerCase(),
-        pm25: snapshot.pollutants?.pm25,
-        city: snapshot.location?.city,
-      });
-
-      const cached = aiResponseCache.get(cacheKey);
-      if (cached) {
-        res.setHeader('X-Cache-Status', 'HIT');
-        res.status(200).json(cached);
-        return;
-      }
-
-      const response = await executeServerGroundedAnswer(question, snapshot as any, plan as any, registry as any, []);
-      aiResponseCache.set(cacheKey, response);
-
-      res.setHeader('X-Cache-Status', 'MISS');
-      res.status(200).json(response);
-      return;
-    }
-
-    const response = await executeServerGroundedAnswer(question, snapshot as any, plan as any, registry as any, history);
-    res.setHeader('X-Cache-Status', 'BYPASS');
-    res.status(200).json(response);
-  } catch (err) {
-    next(err);
-  }
+app.use('/api', (_req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: 'Requested environmental gateway endpoint does not exist.',
+  });
 });
 
 // 6. Serve production static bundle if built (unified App Hosting / Render / Docker mode)

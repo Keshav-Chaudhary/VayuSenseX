@@ -33,7 +33,10 @@ jobs:
       - name: Strict TypeScript Compilation Check
         run: npm run typecheck
 
-      - name: Run Vitest Automated Test Suite (100 Tests)
+      - name: Structural Code Quality & Modularity Gate
+        run: npm run check-quality
+
+      - name: Run Vitest Automated Test Suite (963 Tests Across 43 Suites)
         run: npm test
 
       - name: Verify Repository Size (< 10 MB Limit)

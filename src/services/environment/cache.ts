@@ -8,21 +8,20 @@ interface CacheEntry<T> {
   ttlMs: number;
 }
 
-const memoryCache = new Map<string, CacheEntry<any>>();
-const inFlightPromises = new Map<string, Promise<any>>();
+const memoryCache = new Map<string, CacheEntry<unknown>>();
+const inFlightPromises = new Map<string, Promise<unknown>>();
 
-export class EnvironmentalCache {
+export const EnvironmentalCache = {
   /**
    * Fetch with automatic caching, request deduplication, and stale handling.
    */
-  static async getOrFetch<T>(
+  async getOrFetch<T>(
     key: string,
     fetchFn: () => Promise<T>,
     ttlMs: number = 15 * 60 * 1000 // 15 mins default
   ): Promise<{ data: T; isCached: boolean; isStale: boolean }> {
     const now = Date.now();
 
-    // Check memory cache
     const memEntry = memoryCache.get(key);
     if (memEntry) {
       const isStale = now - memEntry.cachedAt > memEntry.ttlMs;
@@ -31,7 +30,6 @@ export class EnvironmentalCache {
       }
     }
 
-    // Check localStorage cache if available
     try {
       const localData = localStorage.getItem(`vayusensex_cache_${key}`);
       if (localData) {
@@ -46,14 +44,12 @@ export class EnvironmentalCache {
       // Ignore localStorage failure in restricted contexts
     }
 
-    // Request Coalescing (Deduplication)
-    let ongoingPromise = inFlightPromises.get(key);
+    let ongoingPromise = inFlightPromises.get(key) as Promise<T> | undefined;
     if (ongoingPromise) {
       const result = await ongoingPromise;
       return { data: result, isCached: true, isStale: false };
     }
 
-    // Execute actual fetch
     ongoingPromise = (async () => {
       try {
         const freshData = await fetchFn();
@@ -78,16 +74,24 @@ export class EnvironmentalCache {
       const freshResult = await ongoingPromise;
       return { data: freshResult, isCached: false, isStale: false };
     } catch (err) {
-      // If network fails, return stale entry if one exists
       if (memEntry) {
         return { data: memEntry.data as T, isCached: true, isStale: true };
       }
       throw err;
     }
-  }
+  },
 
-  static clear(): void {
+  clear(): void {
     memoryCache.clear();
     inFlightPromises.clear();
-  }
-}
+    try {
+      if (typeof localStorage !== 'undefined') {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('vayusensex_cache_'))
+          .forEach((k) => localStorage.removeItem(k));
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  },
+};

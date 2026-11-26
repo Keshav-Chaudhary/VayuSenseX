@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import express from 'express';
 import { createRateLimiter, securityHeadersMiddleware, safeErrorHandler, clearRateLimits } from '../../server/middleware';
 import { Sha256LruCache } from '../../server/cache';
@@ -49,8 +49,10 @@ describe('Server Security Gateway Adversarial & Defensive Invariant Tests', () =
       },
     };
 
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const sensitiveError = new Error('Database password failed at postgresql://admin:secretPass@10.0.0.1');
     safeErrorHandler(sensitiveError, {} as any, mockRes, () => {});
+    errSpy.mockRestore();
 
     expect(capturedStatus).toBe(500);
     expect(capturedBody.error).toBe('Internal Server Error');

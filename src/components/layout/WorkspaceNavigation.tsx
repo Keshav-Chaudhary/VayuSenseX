@@ -123,6 +123,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
           >
             <button
               onClick={() => onStandardChange('CPCB')}
+              aria-pressed={standard === 'CPCB'}
               className={`rounded-full px-2.5 py-1 font-bold text-[11px] transition-all ${
                 standard === 'CPCB'
                   ? 'bg-[var(--accent)] text-white shadow-xs'
@@ -134,6 +135,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
             </button>
             <button
               onClick={() => onStandardChange('USEPA')}
+              aria-pressed={standard === 'USEPA'}
               className={`rounded-full px-2.5 py-1 font-bold text-[11px] transition-all ${
                 standard === 'USEPA'
                   ? 'bg-[var(--accent)] text-white shadow-xs'
@@ -184,6 +186,7 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
             return (
               <button
                 key={tab.id}
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => {
                   onNavigate(tab.id);
                   setMobileMenuOpen(false);

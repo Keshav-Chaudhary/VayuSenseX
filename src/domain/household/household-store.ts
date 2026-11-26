@@ -140,8 +140,8 @@ const inMemoryStore = new Map<string, string>();
 /**
  * Local-first persistence manager for household configuration.
  */
-export class HouseholdStore {
-  static getProfile(): HouseholdProfile {
+export const HouseholdStore = {
+  getProfile(): HouseholdProfile {
     try {
       let stored: string | null = null;
       if (typeof localStorage !== 'undefined') {
@@ -160,9 +160,9 @@ export class HouseholdStore {
       // LocalStorage access restricted or invalid JSON
     }
     return JSON.parse(JSON.stringify(DEFAULT_HOUSEHOLD_PROFILE));
-  }
+  },
 
-  static saveProfile(profile: HouseholdProfile): void {
+  saveProfile(profile: HouseholdProfile): void {
     try {
       const updated = {
         ...profile,
@@ -177,9 +177,9 @@ export class HouseholdStore {
     } catch (err) {
       console.warn('Failed to persist household profile', err);
     }
-  }
+  },
 
-  static resetToDefault(): HouseholdProfile {
+  resetToDefault(): HouseholdProfile {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(STORAGE_KEY);
@@ -190,13 +190,13 @@ export class HouseholdStore {
       // Ignore
     }
     return DEFAULT_HOUSEHOLD_PROFILE;
-  }
+  },
 
-  static exportProfileJSON(): string {
+  exportProfileJSON(): string {
     return JSON.stringify(this.getProfile(), null, 2);
-  }
+  },
 
-  static importProfileJSON(jsonString: string): HouseholdProfile {
+  importProfileJSON(jsonString: string): HouseholdProfile {
     const parsed = JSON.parse(jsonString);
     if (!parsed.name || !parsed.home || !Array.isArray(parsed.members)) {
       throw new Error('Invalid household profile JSON schema');
@@ -208,5 +208,5 @@ export class HouseholdStore {
     };
     this.saveProfile(validated);
     return validated;
-  }
-}
+  },
+};

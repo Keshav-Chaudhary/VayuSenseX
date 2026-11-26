@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "node --max-old-space-size=280 ./node_modules/typescript/bin/tsc --noEmit",
-    "check-size": "node scripts/check-repo-size.mjs"
+    "check-size": "node scripts/check-repo-size.mjs",
+    "check-quality": "node scripts/check-code-quality.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -76,6 +76,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
           >
             <button
               onClick={() => onStandardChange('CPCB')}
+              aria-pressed={standard === 'CPCB'}
               className={`rounded-full px-2 sm:px-3 py-1 font-bold text-[11px] sm:text-xs transition-all ${
                 standard === 'CPCB'
                   ? 'bg-[var(--accent)] text-white shadow-xs'
@@ -87,6 +88,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({
             </button>
             <button
               onClick={() => onStandardChange('USEPA')}
+              aria-pressed={standard === 'USEPA'}
               className={`rounded-full px-2 sm:px-3 py-1 font-bold text-[11px] sm:text-xs transition-all ${
                 standard === 'USEPA'
                   ? 'bg-[var(--accent)] text-white shadow-xs'

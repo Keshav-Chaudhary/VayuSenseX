@@ -2,18 +2,17 @@
 
 ## Threat Model & Principles
 1. **Zero Secret Exposure**:
-   - GenAI API keys (e.g. Google Gemini) are stored strictly on backend serverless environments or isolated behind server proxies.
-   - Frontend client bundles never contain or log secret tokens.
-2. **Fact-ID Grounding & Anti-Hallucination Guard**:
-   - All quantitative numbers displayed must reference an authorized `FactId` produced by the deterministic engine.
-   - Prevents prompt injection from overriding environmental measurements or safety precautions.
-3. **Privacy-Preserving Guest Mode**:
-   - Family sensitivities, home dimensions, and schedules are stored locally in the user's browser (`localStorage`) by default.
-   - No sensitive personal details are sent to third-party analytics or server logging.
-4. **Input Sanitization & Schema Validation**:
-   - All incoming API parameters are strictly parsed using Zod schemas.
-5. **Dependency Hygiene**:
-   - Zero critical or high severity vulnerabilities maintained via automated package auditing.
+   - GenAI API keys (`GEMINI_API_KEY`) are loaded strictly server-side in Express 5 and transmitted to Google AI Studio exclusively via the `x-goog-api-key` HTTP header (never in URL query strings or client bundles).
+2. **Perimeter & Header Hardening (`server.ts` & `server/middleware.ts`)**:
+   - `app.disable('x-powered-by')` removes framework fingerprinting.
+   - Strict `Content-Security-Policy` (`script-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`, and conditional HTTPS `Strict-Transport-Security`.
+   - `express.json({ limit: '15kb' })`, IP rate limiting (`30 req/min` with reverse-proxy `trust proxy`), strict CORS origin allowlist, and CWE-209 sanitized error handler (400 on malformed JSON, zero stack traces leaked).
+3. **Strict Zod Input Validation (`server/schemas.ts`)**:
+   - All `/api/briefing` and `/api/assist` payloads use `.strict()` Zod schemas with bounded strings, finite geographic coordinates (`latitude`/`longitude`), finite nonnegative pollutant bounds, and zero `z.any()` escape hatches.
+4. **Fact-ID Grounding & Anti-Hallucination Guard**:
+   - Gemini responses are validated against an immutable `FactRegistry`; ungrounded or hallucinated numerical claims trigger automatic deterministic fallback.
+5. **Privacy-Preserving Guest Mode**:
+   - Family sensitivities, home dimensions, and schedules reside exclusively in browser `localStorage` with zero remote tracking.
 
 ## Reporting a Vulnerability
 If you discover a security issue, please open an issue in this repository or contact the maintainer directly.
