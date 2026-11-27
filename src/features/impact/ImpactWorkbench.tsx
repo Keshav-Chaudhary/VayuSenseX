@@ -22,9 +22,7 @@ export const ImpactWorkbench: React.FC = () => {
   const [confirmingReset, setConfirmingReset] = useState<boolean>(false);
 
   // Compute live mathematical summary
-  const summary = useMemo(() => {
-    return ImpactLedgerStore.getSummary();
-  }, [entries]);
+  const summary = ImpactLedgerStore.getSummary();
 
   const handleStatusUpdate = (hash: string, newStatus: ActionLifecycleStatus) => {
     ImpactLedgerStore.updateActionStatus(hash, newStatus);

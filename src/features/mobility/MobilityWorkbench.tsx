@@ -23,11 +23,8 @@ export const MobilityWorkbench: React.FC<MobilityWorkbenchProps> = ({
   const [destinationId, setDestinationId] = useState<string>('NODE_RESIDENTIAL');
   const [preferredMode, setPreferredMode] = useState<TransportMode>('PETROL_CAR');
   const [optimizationGoal, setOptimizationGoal] = useState<'LOWEST_EXPOSURE' | 'SHORTEST_TIME' | 'BALANCED'>('LOWEST_EXPOSURE');
-  const [ambientPm25, setAmbientPm25] = useState<number>(currentOutdoorPm25);
-
-  React.useEffect(() => {
-    setAmbientPm25(currentOutdoorPm25);
-  }, [currentOutdoorPm25]);
+  const [ambientOverride, setAmbientOverride] = useState<number | null>(null);
+  const ambientPm25 = ambientOverride ?? currentOutdoorPm25;
 
   // Lifecycle emissions state
   const [distanceKm, setDistanceKm] = useState<number>(16);
@@ -185,7 +182,7 @@ export const MobilityWorkbench: React.FC<MobilityWorkbenchProps> = ({
                   max="450"
                   step="10"
                   value={ambientPm25}
-                  onChange={(e) => setAmbientPm25(Number(e.target.value))}
+                  onChange={(e) => setAmbientOverride(Number(e.target.value))}
                   className="w-full accent-cyan-400"
                 />
               </div>

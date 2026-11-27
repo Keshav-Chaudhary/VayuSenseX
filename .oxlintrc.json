@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn"
@@ -7,7 +8,8 @@
   "rules": {
     "no-unused-vars": "error",
     "no-debugger": "error",
-    "no-eval": "error"
+    "no-eval": "error",
+    "react/rules-of-hooks": "error"
   },
   "ignorePatterns": ["dist/**", "node_modules/**", "coverage/**"]
 }

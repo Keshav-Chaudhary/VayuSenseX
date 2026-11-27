@@ -132,8 +132,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </div>
 
                   {/* Standard toggle inside card */}
-                  <div className="flex items-center bg-[var(--surface-3)] p-0.5 rounded-full border border-[var(--border)] text-xs">
+                  <div
+                    role="group"
+                    aria-label="AQI Standard Selection"
+                    className="flex items-center bg-[var(--surface-3)] p-0.5 rounded-full border border-[var(--border)] text-xs"
+                  >
                     <button
+                      aria-pressed={standard === 'CPCB'}
                       onClick={() => onStandardChange('CPCB')}
                       className={`px-2.5 py-1 rounded-full font-bold text-[11px] transition-all ${
                         standard === 'CPCB' ? 'bg-[var(--accent)] text-white shadow-xs' : 'text-[var(--fg-muted)]'
@@ -142,6 +147,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       CPCB
                     </button>
                     <button
+                      aria-pressed={standard === 'USEPA'}
                       onClick={() => onStandardChange('USEPA')}
                       className={`px-2.5 py-1 rounded-full font-bold text-[11px] transition-all ${
                         standard === 'USEPA' ? 'bg-[var(--accent)] text-white shadow-xs' : 'text-[var(--fg-muted)]'

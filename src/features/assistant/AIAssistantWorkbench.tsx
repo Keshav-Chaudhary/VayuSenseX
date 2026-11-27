@@ -56,9 +56,11 @@ export const AIAssistantWorkbench: React.FC<AIAssistantWorkbenchProps> = ({
   }, [snapshot, plan]);
 
   // Reset conversation when city changes so contexts never mix across locations
-  useEffect(() => {
+  const [prevCity, setPrevCity] = useState(snapshot.location.city);
+  if (prevCity !== snapshot.location.city) {
+    setPrevCity(snapshot.location.city);
     setChatHistory([]);
-  }, [snapshot.location.city]);
+  }
 
   // Check backend gateway AI readiness on mount (non-intrusive, zero token cost)
   useEffect(() => {
@@ -74,7 +76,9 @@ export const AIAssistantWorkbench: React.FC<AIAssistantWorkbenchProps> = ({
   // Generate grounded daily briefing on context change
   useEffect(() => {
     let isMounted = true;
-    setIsLoadingBriefing(true);
+    queueMicrotask(() => {
+      if (isMounted) setIsLoadingBriefing(true);
+    });
 
     getGroundedDailyBriefing(snapshot, plan, factRegistry, 'CPCB')
       .then((res) => {

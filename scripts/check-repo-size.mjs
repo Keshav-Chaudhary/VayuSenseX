@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const IGNORED_DIRS = new Set(['node_modules', '.git', '.firebase', 'dist', 'coverage']);
+const IGNORED_DIRS = new Set(['node_modules', '.git', '.firebase', 'dist', 'coverage', 'Promptwar-6-main_vinay']);
 
 function getDirectorySize(dirPath) {
   let totalSize = 0;

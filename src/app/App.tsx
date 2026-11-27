@@ -102,7 +102,9 @@ export const App: React.FC = () => {
 
   // Initial telemetry load on mount
   useEffect(() => {
-    loadTelemetry(28.6508, 77.3153, 'Delhi NCR', 'Anand Vihar Monitoring Sector');
+    queueMicrotask(() => {
+      void loadTelemetry(28.6508, 77.3153, 'Delhi NCR', 'Anand Vihar Monitoring Sector');
+    });
   }, [loadTelemetry]);
 
   const activeOutdoorPm25 = snapshot.pollutants.pm25 ?? 150;
@@ -128,7 +130,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main id="main-content" className="flex-1 focus:outline-none">
+      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
         {currentView === 'landing' && (
           <LandingPage
             onEnterDashboard={() => setCurrentView('dashboard')}

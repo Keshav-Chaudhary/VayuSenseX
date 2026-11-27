@@ -20,12 +20,8 @@ interface CommunityHubProps {
 
 export const CommunityHub: React.FC<CommunityHubProps> = ({ currentCity = 'Local Neighborhood' }) => {
   const [pledges, setPledges] = useState<CommunityActionPledge[]>(() => CommunityStore.getPledges());
-  const [stats, setStats] = useState(() => CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
   const [notification, setNotification] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    setStats(CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
-  }, [currentCity]);
+  const stats = CommunityStore.getAggregatedStats(`${currentCity} Local Collective`);
 
   const notify = (msg: string) => {
     setNotification(msg);
@@ -35,14 +31,12 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ currentCity = 'Local
   const handleTogglePledge = (id: string) => {
     const updated = CommunityStore.togglePledge(id);
     setPledges([...updated]);
-    setStats(CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
     notify('Pledge status updated');
   };
 
   const handleIncrementCompletion = (id: string) => {
     const updated = CommunityStore.incrementCompletion(id);
     setPledges([...updated]);
-    setStats(CommunityStore.getAggregatedStats(`${currentCity} Local Collective`));
     notify('Day logged! Collective neighborhood savings updated');
   };
 

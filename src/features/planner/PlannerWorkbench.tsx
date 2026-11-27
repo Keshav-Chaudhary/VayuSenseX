@@ -15,6 +15,31 @@ interface PlannerWorkbenchProps {
   currentOutdoorPm25: number;
 }
 
+function buildSyntheticForecast(base: number): HourlyForecastPoint[] {
+  const now = new Date();
+  return Array.from({ length: 24 }).map((_, i) => {
+    const d = new Date(now);
+    d.setHours(i, 0, 0, 0);
+    let multiplier = 1.0;
+    if (i >= 6 && i <= 9) multiplier = 1.7;
+    else if (i >= 13 && i <= 16) multiplier = 0.55;
+    else if (i >= 20 && i <= 23) multiplier = 1.35;
+
+    const pm25 = Math.round(base * multiplier);
+    return {
+      timestamp: d.toISOString(),
+      hourLabel: `${String(i).padStart(2, '0')}:00`,
+      pm25,
+      pm10: pm25 * 1.6,
+      temperature: 22 - (i >= 12 && i <= 16 ? -6 : Math.abs(i - 14) * 0.5),
+      relativeHumidity: 65,
+      windSpeed: i >= 13 && i <= 16 ? 12 : 4,
+      cpcbAqi: Math.min(500, Math.round(pm25 * 1.3)),
+      usepaAqi: Math.min(500, Math.round(pm25 * 1.1)),
+    };
+  });
+}
+
 export const PlannerWorkbench: React.FC<PlannerWorkbenchProps> = ({
   profile,
   hourlyForecast,
@@ -23,32 +48,7 @@ export const PlannerWorkbench: React.FC<PlannerWorkbenchProps> = ({
   // Generate synthetic hourly forecast if empty (e.g. offline sample data)
   const activeForecast = useMemo<HourlyForecastPoint[]>(() => {
     if (hourlyForecast.length >= 24) return hourlyForecast;
-    
-    // Deterministic 24-hr diurnal smog pattern based on current outdoor PM2.5
-    const base = currentOutdoorPm25;
-    const now = new Date();
-    return Array.from({ length: 24 }).map((_, i) => {
-      const d = new Date(now);
-      d.setHours(i, 0, 0, 0);
-      // Diurnal curve: peak at 07:00-09:00 (inversion + morning traffic), valley at 14:00-16:00
-      let multiplier = 1.0;
-      if (i >= 6 && i <= 9) multiplier = 1.7; // Morning smog peak
-      else if (i >= 13 && i <= 16) multiplier = 0.55; // Afternoon thermal boundary layer expansion
-      else if (i >= 20 && i <= 23) multiplier = 1.35; // Night cooling compression
-      
-      const pm25 = Math.round(base * multiplier);
-      return {
-        timestamp: d.toISOString(),
-        hourLabel: `${String(i).padStart(2, '0')}:00`,
-        pm25,
-        pm10: pm25 * 1.6,
-        temperature: 22 - (i >= 12 && i <= 16 ? -6 : Math.abs(i - 14) * 0.5),
-        relativeHumidity: 65,
-        windSpeed: i >= 13 && i <= 16 ? 12 : 4,
-        cpcbAqi: Math.min(500, Math.round(pm25 * 1.3)),
-        usepaAqi: Math.min(500, Math.round(pm25 * 1.1)),
-      };
-    });
+    return buildSyntheticForecast(currentOutdoorPm25);
   }, [hourlyForecast, currentOutdoorPm25]);
 
   // Compute daily household plan

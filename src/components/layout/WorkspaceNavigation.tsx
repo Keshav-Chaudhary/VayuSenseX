@@ -60,10 +60,6 @@ export const WorkspaceNavigation: React.FC<WorkspaceNavigationProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [currentView]);
-
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && mobileMenuOpen) {
         setMobileMenuOpen(false);

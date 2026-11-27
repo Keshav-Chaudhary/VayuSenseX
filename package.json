@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy --only hosting",
-    "lint": "oxlint src server server.ts",
+    "lint": "oxlint --deny-warnings src server server.ts",
     "test": "vitest run --no-file-parallelism",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

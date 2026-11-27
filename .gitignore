@@ -48,3 +48,6 @@ tsconfig.tsbuildinfo
 .firebase/
 firebase-debug*.log
 
+# Local reference folder (never commit)
+Promptwar-6-main_vinay/
+

@@ -150,7 +150,7 @@ export const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-[var(--border)] pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--fg-subtle)]">
           <div>
-            &copy; {new Date().getFullYear()} VayuSenseX · Urban Air Quality Assistant for Families &amp; Communities.
+            &copy; 2026 VayuSenseX · Urban Air Quality Assistant for Families &amp; Communities.
           </div>
           <div className="flex items-center space-x-4 mt-3 sm:mt-0 font-medium">
             <span className="inline-flex items-center text-[var(--accent)] text-[11px]">

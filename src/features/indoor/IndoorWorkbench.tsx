@@ -21,11 +21,8 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
   // Mass balance parameters
   const [activeSources, setActiveSources] = useState<string[]>([]);
   const [airExchangeACH, setAirExchangeACH] = useState<number>(0.3); // sealed room baseline
-  const [outdoorConcentration, setOutdoorConcentration] = useState<number>(currentOutdoorPm25);
-
-  React.useEffect(() => {
-    setOutdoorConcentration(currentOutdoorPm25);
-  }, [currentOutdoorPm25]);
+  const [outdoorOverride, setOutdoorOverride] = useState<number | null>(null);
+  const outdoorConcentration = outdoorOverride ?? currentOutdoorPm25;
 
   // Compute room volume
   const volumeM3 = useMemo(() => {
@@ -224,7 +221,7 @@ export const IndoorWorkbench: React.FC<IndoorWorkbenchProps> = ({ currentOutdoor
         {/* Dynamic Mass-Balance Output (7 Cols) */}
         <MassBalancePanel
           outdoorConcentration={outdoorConcentration}
-          onOutdoorConcentrationChange={setOutdoorConcentration}
+          onOutdoorConcentrationChange={setOutdoorOverride}
           airExchangeACH={airExchangeACH}
           onAirExchangeACHChange={setAirExchangeACH}
           activeSources={activeSources}
